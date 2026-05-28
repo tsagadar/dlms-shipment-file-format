@@ -28,14 +28,14 @@
           <!-- Both key sets have securitySuite=0, clientId=1 — invalid -->
           <DlmsKeySet securitySuite="0" clientId="1" name="first">
             <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
               <KekRef kek="kek-1"/>
               <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
             </Credential>
           </DlmsKeySet>
           <DlmsKeySet securitySuite="0" clientId="1" name="duplicate">
             <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
               <KekRef kek="kek-1"/>
               <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
             </Credential>

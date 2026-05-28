@@ -71,19 +71,19 @@
   </sch:pattern>
 
   <!-- ================================================================== -->
-  <!-- 3. kw-aes256 requires a KekRef                                     -->
+  <!-- 3. kw-aes256-pad requires a KekRef                                 -->
   <!-- ================================================================== -->
   <!--
     The XSD marks KekRef as optional (it is absent for plaintext keys),
-    but when the wrapping algorithm is kw-aes256 the importer needs a
+    but when the wrapping algorithm is kw-aes256-pad the importer needs a
     KekRef to know which KEK to use for unwrapping.  Omitting it makes
     the credential unrecoverable.
   -->
-  <sch:pattern id="kw-aes256-requires-kekref">
+  <sch:pattern id="kw-aes256-pad-requires-kekref">
     <sch:rule context="tns:Credential/tns:EncryptionMethod[
-        @algorithm = 'http://www.w3.org/2001/04/xmlenc#kw-aes256']">
+        @algorithm = 'http://www.w3.org/2009/xmlenc11#kw-aes-256-pad']">
       <sch:assert test="../tns:KekRef">
-        A Credential with EncryptionMethod kw-aes256 must have a sibling
+        A Credential with EncryptionMethod kw-aes256-pad must have a sibling
         KekRef element that names the KEK used for wrapping.
       </sch:assert>
     </sch:rule>

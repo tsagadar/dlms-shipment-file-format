@@ -485,7 +485,8 @@
         A single key. The plaintext key material is never present unless the
         file's allowPlaintextKeys gate is true AND this credential's
         EncryptionMethod declares "none". Normally CipherValue holds the key
-        AES-key-wrapped (RFC 3394/5649) under the Kek named by KekRef.
+        AES-256 key-wrapped with padding (RFC 5649) under the Kek named by
+        KekRef.
 
         KeyCheckValue lets an importer confirm a correct unwrap without exposing
         the key. GeneratedAt provides an ordering signal so an importer can
@@ -499,7 +500,7 @@
         <xs:annotation>
           <xs:documentation xml:lang="en">
             Names the Kek that wraps this key. Required when EncryptionMethod is
-            kw-aes256; omitted when the key is plaintext (none).
+            kw-aes256-pad; omitted when the key is plaintext (none).
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -559,14 +560,19 @@
     <xs:annotation>
       <xs:documentation xml:lang="en">
         Allowed key-protection methods.
-          kw-aes256 : AES-256 Key Wrap (RFC 3394/5649). The only wrapping method
-                      in v1 - authenticated, deterministic, no IV.
-          none      : plaintext key material. Valid ONLY when the file's
-                      allowPlaintextKeys gate is true. For sample/lab meters.
+
+          kw-aes256-pad (XMLEnc 1.1) - AES-256 Key Wrap with Padding
+                        (RFC 5649). Authenticated, deterministic, no IV.
+                        Accepts key material of any byte length, so there
+                        is no alignment constraint on credential data.
+
+          none          - plaintext key material. Valid ONLY when the
+                        file's allowPlaintextKeys gate is true. For
+                        sample/lab meters only.
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:anyURI">
-      <xs:enumeration value="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+      <xs:enumeration value="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
       <xs:enumeration value="https://open-metering.org/schemas/dlms-shipment-file/2026-05#none"/>
     </xs:restriction>
   </xs:simpleType>

@@ -40,7 +40,7 @@ if not ok: print(etree.tostring(sch.validation_report, pretty_print=True).decode
 
 **Schema-valid** — passes `xmllint --schema dlms-shipment-file-2026-05.xsd`.
 Necessary but not sufficient for production use.  The XSD cannot express
-conditional rules (e.g. "kw-aes256 requires KekRef") or placement rules
+conditional rules (e.g. "kw-aes256-pad requires KekRef") or placement rules
 (e.g. "EapPsk belongs only in NetworkCredentials").
 
 **Conformance-valid** — passes both the XSD and `dlms-shipment.sch`.
@@ -96,8 +96,8 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │                                          GlobalUnicastEncryption,
 │                                          GlobalAuthentication,
 │                                          Other}
-│                       ├── EncryptionMethod (kw-aes256 | none)
-│                       ├── KekRef           (→ Header/Kek/@id; required for kw-aes256)
+│                       ├── EncryptionMethod (kw-aes256-pad | none)
+│                       ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
 │                       ├── xenc:CipherData  (AES-key-wrapped key)
 │                       ├── KeyCheckValue    (optional)
 │                       └── GeneratedAt       (optional)
@@ -124,16 +124,14 @@ recipients (each with their own RSA key), where they genuinely scope exposure.
 Multiple KEKs all wrapped to the same recipient add structure without adding
 security and should be avoided.
 
-### Authenticated key wrap only: `kw-aes256`
+### Authenticated key wrap only: `kw-aes256-pad`
 
-Key material is always wrapped with **AES-256 Key Wrap (RFC 3394)** and nothing
-else. The `kw-aes256` identifier maps to RFC 3394, which requires the wrapped
-key to be a multiple of 8 bytes. All standard DLMS key types (MasterKey, GUEK,
-GAK, EapPsk) are 128-bit (16 bytes) or 256-bit (32 bytes), both multiples of
-8 bytes, so no padding is needed. If `Other` credentials carry non-standard
-key material whose length is not a multiple of 8 bytes, do not use `kw-aes256`;
-an explicit padded wrap URI (RFC 5649 / XMLEnc 1.1 `kw-aes-256-pad`) will be
-added in a future version.
+Key material is always wrapped with **AES-256 Key Wrap with Padding (RFC 5649)**
+and nothing else. RFC 5649 is a strict superset of the original RFC 3394 AES Key
+Wrap: it accepts key material of any byte length, making it fool-proof for all
+credential types including `Other` credentials of non-standard length. For
+standard DLMS key types (MasterKey, GUEK, GAK, EapPsk), which are 128-bit or
+256-bit, RFC 5649 and RFC 3394 provide the same security properties.
 
 AES key wrap is purpose-built for wrapping keys: it is deterministic, needs no
 IV, and carries a built-in integrity check, so a bad unwrap is detected rather

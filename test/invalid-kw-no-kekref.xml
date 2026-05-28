@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  INVALID: Credential uses kw-aes256 wrapping but has no KekRef element.
+  INVALID: Credential uses kw-aes256-pad wrapping but has no KekRef element.
   An importer cannot determine which KEK to use for unwrapping.
-  Expected failure: Schematron rule kw-aes256-requires-kekref.
+  Expected failure: Schematron rule kw-aes256-pad-requires-kekref.
   (Passes XSD because KekRef is minOccurs="0".)
 -->
 <ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
@@ -27,9 +27,9 @@
       <Device systemTitle="0102030405060708">
         <LogicalDevice logicalDeviceName="LD1">
           <DlmsKeySet securitySuite="0" clientId="1">
-            <!-- kw-aes256 without KekRef — invalid -->
+            <!-- kw-aes256-pad without KekRef — invalid -->
             <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
               <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
             </Credential>
           </DlmsKeySet>
