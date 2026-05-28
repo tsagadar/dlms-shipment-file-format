@@ -6,7 +6,7 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from shipment import Credential, Device, DlmsKeySet, LogicalDevice, ShipmentFileBuilder
 
@@ -17,11 +17,15 @@ def _key(system_title: str, purpose: str, length: int = 16) -> bytes:
     return hashlib.sha256(f"{system_title}/{purpose}".encode()).digest()[:length]
 
 
-def create_sample_shipment(recipient_public_key: RSAPublicKey) -> bytes:
+def create_sample_shipment(
+    recipient_public_key: RSAPublicKey,
+    signing_private_key: RSAPrivateKey | None = None,
+) -> bytes:
     builder = ShipmentFileBuilder(
         recipient_public_key=recipient_public_key,
         producer_customer="ACME Utility",
         producer_manufacturer="SmartMeter Inc",
+        signing_private_key=signing_private_key,
     )
 
     # Device 1 — VLT: G3-PLC meter with management and installer access levels
@@ -185,12 +189,20 @@ def create_sample_shipment(recipient_public_key: RSAPublicKey) -> bytes:
 
 
 def main() -> None:
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    xml_bytes = create_sample_shipment(private_key.public_key())
+    recipient_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    signing_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    xml_bytes = create_sample_shipment(recipient_key.public_key(), signing_key)
 
     Path("shipment-sample.xml").write_bytes(xml_bytes)
     Path("recipient-private-key.pem").write_bytes(
-        private_key.private_bytes(
+        recipient_key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            serialization.NoEncryption(),
+        )
+    )
+    Path("signing-private-key.pem").write_bytes(
+        signing_key.private_bytes(
             serialization.Encoding.PEM,
             serialization.PrivateFormat.TraditionalOpenSSL,
             serialization.NoEncryption(),
@@ -198,6 +210,7 @@ def main() -> None:
     )
     print(f"Written shipment-sample.xml ({len(xml_bytes)} bytes)")
     print("Written recipient-private-key.pem")
+    print("Written signing-private-key.pem")
 
 
 if __name__ == "__main__":
