@@ -39,6 +39,14 @@
         * Opinionated v1      - a deliberately small, sharp vocabulary. Anything
                                 genuinely missing returns via additive versioning
                                 or the Other/name escape hatch.
+
+      Validation note: XSD validation alone is necessary but NOT sufficient
+      for production use. This schema cannot express conditional rules such as
+      "kw-aes256-pad requires KekRef" or placement rules such as "EapPsk
+      belongs only in NetworkCredentials". Those constraints are normatively
+      enforced by dlms-shipment.sch (ISO Schematron). A conformance-valid file
+      must pass both validators. Production importers MUST reject files that
+      fail either check.
     </xs:documentation>
   </xs:annotation>
 
