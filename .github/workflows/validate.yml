@@ -1,0 +1,103 @@
+name: Validate schema and conformance rules
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install xmllint
+        run: sudo apt-get install -y libxml2-utils
+
+      - name: Install Python Schematron validator
+        run: pip install lxml
+
+      # ------------------------------------------------------------------ #
+      # XSD: positive example must validate                                 #
+      # ------------------------------------------------------------------ #
+      - name: XSD — positive example validates
+        run: xmllint --schema dlms-shipment-file-2026-05.xsd example-shipment.xml --noout
+
+      # ------------------------------------------------------------------ #
+      # XSD: negative cases must be rejected by the schema                 #
+      # ------------------------------------------------------------------ #
+      - name: XSD — invalid-mixed-case-systemtitle is rejected
+        run: |
+          if xmllint --schema dlms-shipment-file-2026-05.xsd \
+              test/invalid-mixed-case-systemtitle.xml --noout 2>/dev/null; then
+            echo "FAIL: expected XSD rejection" && exit 1
+          fi
+
+      - name: XSD — invalid-duplicate-systemtitle is rejected
+        run: |
+          if xmllint --schema dlms-shipment-file-2026-05.xsd \
+              test/invalid-duplicate-systemtitle.xml --noout 2>/dev/null; then
+            echo "FAIL: expected XSD rejection" && exit 1
+          fi
+
+      - name: XSD — invalid-duplicate-logicaldevicename is rejected
+        run: |
+          if xmllint --schema dlms-shipment-file-2026-05.xsd \
+              test/invalid-duplicate-logicaldevicename.xml --noout 2>/dev/null; then
+            echo "FAIL: expected XSD rejection" && exit 1
+          fi
+
+      - name: XSD — invalid-duplicate-dlmskeyset-identity is rejected
+        run: |
+          if xmllint --schema dlms-shipment-file-2026-05.xsd \
+              test/invalid-duplicate-dlmskeyset-identity.xml --noout 2>/dev/null; then
+            echo "FAIL: expected XSD rejection" && exit 1
+          fi
+
+      # ------------------------------------------------------------------ #
+      # Schematron: positive example must pass                              #
+      # ------------------------------------------------------------------ #
+      - name: Schematron — positive example passes
+        run: |
+          python3 - <<'EOF'
+          from lxml import etree, isoschematron
+          sch = isoschematron.Schematron(etree.parse("dlms-shipment.sch"), store_report=True)
+          doc = etree.parse("example-shipment.xml")
+          if not sch.validate(doc):
+              print(etree.tostring(sch.validation_report, pretty_print=True).decode())
+              raise SystemExit("Schematron validation failed on positive example")
+          EOF
+
+      # ------------------------------------------------------------------ #
+      # Schematron: negative cases must trigger assertion failures          #
+      # ------------------------------------------------------------------ #
+      - name: Schematron — negative cases are rejected
+        run: |
+          python3 - <<'EOF'
+          import sys
+          from lxml import etree, isoschematron
+
+          sch = isoschematron.Schematron(etree.parse("dlms-shipment.sch"), store_report=True)
+
+          cases = [
+              "test/invalid-keyname-only-recipient.xml",
+              "test/invalid-plaintext-no-flag.xml",
+              "test/invalid-kw-no-kekref.xml",
+              "test/invalid-other-no-name.xml",
+              "test/invalid-eappsk-in-dlmskeyset.xml",
+          ]
+
+          failures = []
+          for path in cases:
+              doc = etree.parse(path)
+              if sch.validate(doc):
+                  failures.append(f"  {path}: expected Schematron failure but got pass")
+
+          if failures:
+              print("The following files should have failed Schematron but did not:")
+              for msg in failures:
+                  print(msg)
+              sys.exit(1)
+
+          print(f"All {len(cases)} negative cases correctly rejected by Schematron.")
+          EOF
