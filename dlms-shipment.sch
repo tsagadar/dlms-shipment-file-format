@@ -152,19 +152,24 @@
     An enveloped XML signature must sign the entire ShipmentFile.  A
     Reference with a fragment URI pointing to an interior element would
     leave the rest of the document unsigned and open to tampering.
-    The correct URI is "" (the document root) or "#<document-id>".
+
+    The only correct URI is "" (the document root).  The @id attribute is
+    typed as UuidType (xs:string), not xs:ID, and UUID values start with a
+    digit which is not a valid NCName.  A URI="#<uuid>" fragment reference
+    therefore cannot be resolved by XML Signature processors that rely on
+    getElementById(), so it must not be used.
+
     This is an advisory check; it fires at file-creation time and helps
     producers catch partial-signing mistakes before distribution.
   -->
   <sch:pattern id="signature-root-reference">
     <sch:rule context="ds:Signature">
-      <sch:assert test="
-          ds:SignedInfo/ds:Reference[@URI = ''] or
-          ds:SignedInfo/ds:Reference[@URI = concat('#', /tns:ShipmentFile/@id)]">
-        The ds:Signature must contain a Reference whose URI is either ""
-        (the document root) or "#&lt;document-id&gt;" so that the entire
-        ShipmentFile is covered.  A signature that covers only part of
-        the document does not protect the whole file.
+      <sch:assert test="ds:SignedInfo/ds:Reference[@URI = '']">
+        The ds:Signature must contain a Reference with URI="" (the document
+        root) so that the entire ShipmentFile is covered.  Do not use a
+        URI="#&lt;uuid&gt;" fragment reference: ShipmentFile/@id is typed
+        xs:string, not xs:ID, and UUID values are not valid NCNames, so
+        fragment resolution is unreliable across XML Signature processors.
       </sch:assert>
     </sch:rule>
   </sch:pattern>

@@ -262,8 +262,16 @@ algorithm confusion):
 | CanonicalizationMethod | Canonical XML 1.1 (`http://www.w3.org/2006/12/xml-c14n11`) |
 | SignatureMethod | RSA-SHA256 or ECDSA-SHA256 minimum |
 | DigestMethod | SHA-256 minimum |
-| Reference URI | `""` (document root) or `"#<document-id>"` |
+| Reference URI | `""` (document root) |
 | Transforms | Enveloped signature transform only (`http://www.w3.org/2000/09/xmldsig#enveloped-signature`) |
+
+> **Reference URI note.** Use `URI=""` (empty string, resolves to the document
+> root) rather than `URI="#<uuid>"`. The `@id` attribute is typed as a UUID
+> string, not as `xs:ID`, and UUID values begin with a digit which makes them
+> invalid NCNames. Fragment resolution via `#<uuid>` is therefore unreliable
+> across XML Signature implementations. `URI=""` combined with the enveloped
+> signature transform is the well-tested, portable way to sign the whole
+> document.
 
 Verifiers MUST:
 * Check that the `Reference` URI resolves to the root `ShipmentFile` element

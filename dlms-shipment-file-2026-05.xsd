@@ -107,9 +107,11 @@
     <xs:attribute name="id" type="tns:UuidType" use="required">
       <xs:annotation>
         <xs:documentation xml:lang="en">
-          Globally unique document identifier (UUID). Also the URI target that
-          an enveloped signature references, and the value an importer uses to
-          detect duplicate imports.
+          Globally unique document identifier (UUID). Used by importers for
+          duplicate-import detection. Not declared as xs:ID: UUID values begin
+          with a digit and are therefore not valid NCNames. Enveloped XML
+          Signatures must use Reference URI="" (document root) rather than
+          URI="#&lt;uuid&gt;", which would require xs:ID-based element lookup.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
