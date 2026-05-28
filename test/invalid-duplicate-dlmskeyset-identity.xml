@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  INVALID: Two DlmsKeySet elements with the same (securitySuite, clientId)
+  pair inside one LogicalDevice.
+  Expected failure: XSD xs:unique DlmsKeySetSuiteClientUnique.
+-->
+<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
+              xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
+              id="00000000-0000-0000-0000-000000000004"
+              createdAt="2026-01-01T00:00:00Z"
+              schemaVersion="2026-05"
+              allowPlaintextKeys="false"
+              profile="transfer">
+  <Header>
+    <Producer system="test"/>
+    <Kek id="kek-1">
+      <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+      <RecipientKey>
+        <CertificateThumbprint algorithm="http://www.w3.org/2001/04/xmlenc#sha256">AABBCCDD</CertificateThumbprint>
+      </RecipientKey>
+      <xenc:CipherData><xenc:CipherValue>AAAA</xenc:CipherValue></xenc:CipherData>
+    </Kek>
+  </Header>
+  <Body>
+    <Devices>
+      <Device systemTitle="0102030405060708">
+        <LogicalDevice logicalDeviceName="LD1">
+          <!-- Both key sets have securitySuite=0, clientId=1 — invalid -->
+          <DlmsKeySet securitySuite="0" clientId="1" name="first">
+            <Credential type="GlobalUnicastEncryption">
+              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <KekRef kek="kek-1"/>
+              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+            </Credential>
+          </DlmsKeySet>
+          <DlmsKeySet securitySuite="0" clientId="1" name="duplicate">
+            <Credential type="GlobalAuthentication">
+              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <KekRef kek="kek-1"/>
+              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+            </Credential>
+          </DlmsKeySet>
+        </LogicalDevice>
+      </Device>
+    </Devices>
+  </Body>
+</ShipmentFile>

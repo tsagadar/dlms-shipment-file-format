@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+  INVALID: RecipientKey contains only a KeyName — no certificate,
+  SubjectKeyIdentifier, or thumbprint.
+  Expected failure: Schematron rule recipient-key-identity.
+  (Passes XSD because KeyName is a valid choice in RecipientKeyType.)
+-->
+<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
+              xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
+              id="00000000-0000-0000-0000-000000000005"
+              createdAt="2026-01-01T00:00:00Z"
+              schemaVersion="2026-05"
+              allowPlaintextKeys="false"
+              profile="transfer">
+  <Header>
+    <Producer system="test"/>
+    <Kek id="kek-1">
+      <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+      <!-- KeyName alone is not a valid recipient identity — invalid -->
+      <RecipientKey>
+        <KeyName>magic-string-label</KeyName>
+      </RecipientKey>
+      <xenc:CipherData><xenc:CipherValue>AAAA</xenc:CipherValue></xenc:CipherData>
+    </Kek>
+  </Header>
+  <Body>
+    <Devices>
+      <Device systemTitle="0102030405060708">
+        <LogicalDevice logicalDeviceName="LD1">
+          <DlmsKeySet securitySuite="0" clientId="1">
+            <Credential type="GlobalUnicastEncryption">
+              <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+              <KekRef kek="kek-1"/>
+              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+            </Credential>
+          </DlmsKeySet>
+        </LogicalDevice>
+      </Device>
+    </Devices>
+  </Body>
+</ShipmentFile>
