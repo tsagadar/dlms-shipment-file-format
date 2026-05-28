@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.w3.org/2001/04/xmlenc#"
+    elementFormDefault="qualified">
+  <!-- Minimal declarations for the xenc elements this format uses. -->
+  <xs:element name="CipherData">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="CipherValue" type="xs:base64Binary"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:tns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
+    xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+    xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
+    targetNamespace="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+    version="2026-05">
+
+  <xs:annotation>
+    <xs:documentation xml:lang="en">
+      Open DLMS/COSEM Shipment File format, version 2026-05.
+
+      A vendor-neutral container for transporting DLMS meter cryptographic
+      credentials together with the device identities they belong to. It serves
+      two use cases with a single schema:
+
+        * Manufacturer shipment  - a manufacturer delivers freshly provisioned
+                                   meters (and their keys) to a utility.
+        * System-to-system transfer - keys are exported from one system (e.g. a
+                                   Head-End System) and imported into another
+                                   (e.g. a calibration or test system).
+
+      The transfer use case is the CORE. The manufacturer-shipment use case is a
+      strict SUPERSET: it adds optional, manufacturing-only information (device
+      hardware/firmware metadata; an external, optional Logistics section is
+      reserved for a future revision). A consumer that understands the core can
+      always read a shipment file by ignoring the optional elements.
+
+      Design anchors:
+        * Standards-based     - W3C XML Encryption and XML Signature.
+        * Authenticated wrap  - all key material is protected with AES Key Wrap
+                                (RFC 3394 / 5649). No CBC, no GCM, no IV.
+        * Algorithm agility   - algorithm URIs are constrained per element; new
+                                algorithms are added in a future schema version
+                                (additive only - never remove an algorithm).
+        * Opinionated v1      - a deliberately small, sharp vocabulary. Anything
+                                genuinely missing returns via additive versioning
+                                or the Other/name escape hatch.
+    </xs:documentation>
+  </xs:annotation>
+
+  <!-- We reference the W3C signature and encryption namespaces. Rather than
+       importing their full (awkward) schemas, we declare just the two foreign
+       elements we actually use - ds:Signature and xenc:CipherData - as lax
+       any-content stubs in their own namespaces. This keeps the schema
+       self-contained and tolerant of real-world signature/cipher payloads. -->
+
+  <xs:import namespace="http://www.w3.org/2000/09/xmldsig#"
+             schemaLocation="xmldsig-stub.xsd"/>
+  <xs:import namespace="http://www.w3.org/2001/04/xmlenc#"
+             schemaLocation="xmlenc-stub.xsd"/>
+
+  <!-- ==================================================================== -->
+  <!-- Root                                                                 -->
+  <!-- ==================================================================== -->
+
+  <xs:element name="ShipmentFile" type="tns:ShipmentFileType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Root element. Carries a unique document id and a creation timestamp
+        (for replay/freshness checks), a Header with the key-encryption keys,
+        and a Body with one or more devices.
+
+        If an enveloped XML signature is present it MUST cover the entire
+        document. Signing is OPTIONAL: an unsigned file relies on the
+        authenticity of its transport channel. Consumers SHOULD enforce a
+        local policy on whether unsigned files are acceptable.
+      </xs:documentation>
+    </xs:annotation>
+
+    <!-- Referential integrity: every KekRef must resolve to a Kek/@id, and
+         every device system title is unique within the file. -->
+    <xs:key name="KekIdKey">
+      <xs:selector xpath="tns:Header/tns:Kek"/>
+      <xs:field xpath="@id"/>
+    </xs:key>
+    <xs:keyref name="KekIdRef" refer="tns:KekIdKey">
+      <xs:selector xpath=".//tns:KekRef"/>
+      <xs:field xpath="@kek"/>
+    </xs:keyref>
+    <xs:unique name="DeviceSystemTitleUnique">
+      <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
+      <xs:field xpath="@systemTitle"/>
+    </xs:unique>
+  </xs:element>
+
+  <xs:complexType name="ShipmentFileType">
+    <xs:sequence>
+      <xs:element name="Header" type="tns:HeaderType"/>
+      <xs:element name="Body" type="tns:BodyType"/>
+      <!-- Optional enveloped signature, appended last. Accepted laxly so the
+           file validates with or without it. When present it covers the whole
+           ShipmentFile (enveloped transform + Canonical XML 1.1). -->
+      <xs:element ref="ds:Signature" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="tns:UuidType" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Globally unique document identifier (UUID). Also the URI target that
+          an enveloped signature references, and the value an importer uses to
+          detect duplicate imports.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="createdAt" type="xs:dateTime" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Instant the file was produced. Used for freshness/replay decisions.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="schemaVersion" type="xs:string" use="required" fixed="2026-05">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Mirror of the schema version carried in the namespace URI. Lets a
+          consumer report the version without URI parsing.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="allowPlaintextKeys" type="xs:boolean" use="optional" default="false">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Acceptance gate, NOT a switch that undresses the file. When false
+          (default) every CipherValue MUST be a wrapped key. When true the file
+          MAY contain plaintext key material (sample/lab meters only). A
+          production importer SHOULD reject any file with this set to true.
+          Whether a given key is actually plaintext is stated per-credential by
+          its EncryptionMethod, never by this flag alone.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="profile" type="tns:ProfileType" use="optional" default="transfer">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Declares which constraint profile the producer intends. "transfer" is
+          the core; "shipment" is the manufacturer superset. Informational in
+          v1 - it lets validators and importers apply stricter checks.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="ProfileType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="transfer"/>
+      <xs:enumeration value="shipment"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ==================================================================== -->
+  <!-- Header: key-encryption keys (KEKs)                                   -->
+  <!-- ==================================================================== -->
+
+  <xs:complexType name="HeaderType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Identifies the producer and carries the symmetric key-encryption
+        key(s). Each Kek is itself RSA-OAEP wrapped to a recipient's public
+        key, then used to AES-key-wrap the device credentials in the body
+        (the two-layer design).
+
+        INVARIANT: there should be exactly one Kek per distinct recipient key
+        pair - never more. A single-recipient file therefore has exactly one
+        Kek. Multiple Keks are meaningful ONLY when a file is destined for
+        multiple recipients (e.g. a batch split between two customers, each
+        with their own RSA key pair). Multiple Keks all wrapped to the same
+        recipient add structure without adding security and SHOULD be avoided.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Producer" type="tns:ProducerType"/>
+      <xs:element name="Kek" type="tns:KekType" maxOccurs="unbounded"/>
+      <xs:element name="Extension" type="tns:ExtensionType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ProducerType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Who/what produced this file. "customer" and "manufacturer" mirror the
+        roles seen in real shipment files; "system" names the producing system
+        for the transfer use case.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="customer" type="xs:string" use="optional"/>
+    <xs:attribute name="manufacturer" type="xs:string" use="optional"/>
+    <xs:attribute name="system" type="xs:string" use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="KekType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        A symmetric key-encryption key, wrapped to a recipient public key with
+        RSA-OAEP (rsa-oaep-mgf1p). The recipient is identified by RecipientKey
+        so an importer holding many private keys knows which one to use.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="EncryptionMethod" type="tns:KekEncryptionMethodType">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Algorithm used to wrap THIS Kek. Constrained to RSA-OAEP in v1.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="RecipientKey" type="tns:RecipientKeyType">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Stable identity of the recipient key pair that can unwrap this Kek.
+            Carry an X.509 certificate or a subject key identifier / thumbprint
+            - NOT a free-text magic string. This is the KEK-identity mechanism.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="xenc:CipherData">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            The RSA-OAEP wrapped Kek bytes (xenc:CipherData/xenc:CipherValue,
+            base64).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Local identifier for this Kek. Referenced by Credential/KekRef/@kek.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="KekEncryptionMethodType">
+    <xs:attribute name="algorithm" type="tns:KekAlgorithmType" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="KekAlgorithmType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Allowed KEK-wrapping algorithm URIs. v1: RSA-OAEP only. Future schema
+        versions add ECC / post-quantum KEM URIs here (additive only).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:anyURI">
+      <xs:enumeration value="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="RecipientKeyType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Recipient identity. Provide at least one of: an X.509 certificate, a
+        base64 SubjectKeyIdentifier, or a certificate thumbprint. A KeyName MAY
+        accompany them as a human-readable label but MUST NOT be the sole
+        identifier.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice maxOccurs="unbounded">
+      <xs:element name="X509Certificate" type="xs:base64Binary"/>
+      <xs:element name="SubjectKeyIdentifier" type="xs:base64Binary"/>
+      <xs:element name="CertificateThumbprint" type="tns:ThumbprintType"/>
+      <xs:element name="KeyName" type="xs:string"/>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="ThumbprintType">
+    <xs:simpleContent>
+      <xs:extension base="xs:hexBinary">
+        <xs:attribute name="algorithm" type="xs:anyURI" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="en">
+              Digest algorithm URI used to compute the thumbprint, e.g.
+              http://www.w3.org/2001/04/xmlenc#sha256
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <!-- ==================================================================== -->
+  <!-- Body: devices                                                        -->
+  <!-- ==================================================================== -->
+
+  <xs:complexType name="BodyType">
+    <xs:sequence>
+      <xs:element name="Devices" type="tns:DevicesType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DevicesType">
+    <xs:sequence>
+      <xs:element name="Device" type="tns:DeviceType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DeviceType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        A physical meter. Identified by its COSEM system title (the primary,
+        globally-unique key used for references). Optional manufacturing
+        metadata is present only in the shipment profile and is simply absent
+        in transfer files - the element shape does not change between profiles.
+
+        PARTIAL FAILURE: importers SHOULD reject a single malformed Device and
+        continue importing the rest of the file.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="ManufacturingInfo" type="tns:ManufacturingInfoType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Per-device manufacturing metadata. Optional. Shipment profile only.
+            This is distinct from packaging/logistics (pallet, box, order),
+            which is reserved for a future, separate top-level Logistics section
+            that will reference devices by system title.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LogicalDevice" type="tns:LogicalDeviceType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="systemTitle" type="tns:SystemTitleType" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          COSEM system title: 8 octets, hex-encoded. First 3 octets are the
+          FLAG manufacturer id, the remainder a manufacturer serial. Globally
+          unique by construction; the primary device identity and reference key.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ManufacturingInfoType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Optional manufacturing facts about the device. All fields optional; this
+        block carries no secrets.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="DeviceTypeDesignation" type="xs:string" minOccurs="0"/>
+      <xs:element name="HardwareVersion" type="xs:string" minOccurs="0"/>
+      <xs:element name="FirmwareVersion" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="ManufacturingDate" type="xs:date" minOccurs="0"/>
+      <xs:element name="ConfigurationHash" type="xs:string" minOccurs="0"/>
+      <xs:element name="Extension" type="tns:ExtensionType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LogicalDeviceType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        A COSEM logical device hosted by the meter. DLMS application-layer keys
+        are scoped here. A meter exposes one or more logical devices.
+
+        NetworkCredentials (e.g. the G3-PLC EAP-PSK) are suite-INDEPENDENT and
+        therefore sit as a sibling of the suite-scoped DlmsKeySet blocks, not
+        inside them. NetworkCredentials is optional - not every meter has a PSK.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="NetworkCredentials" type="tns:NetworkCredentialsType" minOccurs="0"/>
+      <xs:element name="DlmsKeySet" type="tns:DlmsKeySetType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="logicalDeviceName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          COSEM logical device name (the secondary identity, complementing the
+          device system title).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- = Network (suite-independent) credentials = -->
+
+  <xs:complexType name="NetworkCredentialsType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Suite-independent network-layer secrets. In v1 this carries the EAP-PSK
+        used by the G3-PLC network. Optional because non-G3 bearers may not use
+        a PSK at all.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Credential" type="tns:CredentialType" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- = DLMS (suite-scoped) key set = -->
+
+  <xs:complexType name="DlmsKeySetType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        The set of DLMS application-layer keys for one client (access level)
+        under one security suite.
+
+        clientId is the grouping key: this format is opinionated that one
+        security setup is NOT shared across associations, so a single client id
+        faithfully identifies the key set. name is an optional human-readable
+        label (e.g. "management", "installer").
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Credential" type="tns:CredentialType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="securitySuite" type="tns:SecuritySuiteType" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          DLMS/COSEM security suite (0, 1, or 2) governing the keys in this set.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="clientId" type="tns:ClientIdType" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          COSEM client SAP / association id that these keys belong to. The
+          grouping key for the set.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Optional human-readable label for the access level. Descriptive only.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="SecuritySuiteType">
+    <xs:restriction base="xs:nonNegativeInteger">
+      <xs:enumeration value="0"/>
+      <xs:enumeration value="1"/>
+      <xs:enumeration value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ClientIdType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">COSEM client SAP, 0..127.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:nonNegativeInteger">
+      <xs:maxInclusive value="127"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- = Credential (the wrapped key) = -->
+
+  <xs:complexType name="CredentialType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        A single key. The plaintext key material is never present unless the
+        file's allowPlaintextKeys gate is true AND this credential's
+        EncryptionMethod declares "none". Normally CipherValue holds the key
+        AES-key-wrapped (RFC 3394/5649) under the Kek named by KekRef.
+
+        KeyCheckValue lets an importer confirm a correct unwrap without exposing
+        the key. GeneratedAt provides an ordering signal so an importer can
+        avoid overwriting a newer key with an older one (the format carries no
+        explicit version number).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="EncryptionMethod" type="tns:KeyEncryptionMethodType"/>
+      <xs:element name="KekRef" type="tns:KekRefType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Names the Kek that wraps this key. Required when EncryptionMethod is
+            kw-aes256; omitted when the key is plaintext (none).
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element ref="xenc:CipherData">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            xenc:CipherData/xenc:CipherValue, base64. Either the AES-key-wrapped
+            key, or - only under the plaintext gate - the raw key bytes.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="KeyCheckValue" type="tns:KeyCheckValueType" minOccurs="0"/>
+      <xs:element name="GeneratedAt" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="type" type="tns:CredentialTypeEnum" use="required"/>
+    <xs:attribute name="name" type="xs:string" use="optional">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          Required only when type = Other; names the non-standard credential.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:simpleType name="CredentialTypeEnum">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Opinionated v1 vocabulary, COSEM-aligned.
+
+          MasterKey                - meter master key (KEK on the meter; used to
+                                     unwrap the others). DlmsKeySet only.
+          GlobalUnicastEncryption  - GUEK. DlmsKeySet only.
+          GlobalAuthentication     - GAK. DlmsKeySet only.
+          EapPsk                   - G3-PLC network PSK. NetworkCredentials only.
+          Other                    - escape hatch; requires @name. Lets a vendor
+                                     ship a non-standard credential without
+                                     forking the schema.
+
+        Placement (which type is valid in which container) is described in the
+        README; v1 keeps a single shared enumeration for vocabulary simplicity.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MasterKey"/>
+      <xs:enumeration value="GlobalUnicastEncryption"/>
+      <xs:enumeration value="GlobalAuthentication"/>
+      <xs:enumeration value="EapPsk"/>
+      <xs:enumeration value="Other"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="KeyEncryptionMethodType">
+    <xs:attribute name="algorithm" type="tns:KeyAlgorithmType" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="KeyAlgorithmType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Allowed key-protection methods.
+          kw-aes256 : AES-256 Key Wrap (RFC 3394/5649). The only wrapping method
+                      in v1 - authenticated, deterministic, no IV.
+          none      : plaintext key material. Valid ONLY when the file's
+                      allowPlaintextKeys gate is true. For sample/lab meters.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:anyURI">
+      <xs:enumeration value="http://www.w3.org/2001/04/xmlenc#kw-aes256"/>
+      <xs:enumeration value="https://open-metering.org/schemas/dlms-shipment-file/2026-05#none"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="KekRefType">
+    <xs:attribute name="kek" type="xs:IDREF" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          IDREF to a Header/Kek/@id. Also validated by the document-level
+          KekIdRef keyref.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="KeyCheckValueType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Key check value. Convention: AES-encrypt an all-zero block under the
+        (unwrapped) key and keep the leading octets (typically 3). Lets an
+        importer verify a correct unwrap without revealing the key.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:simpleContent>
+      <xs:extension base="xs:hexBinary">
+        <xs:attribute name="method" type="xs:anyURI" use="optional"
+                      default="https://open-metering.org/schemas/dlms-shipment-file/2026-05#kcv-aes-zeroblock"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <!-- ==================================================================== -->
+  <!-- Shared simple types and extension point                              -->
+  <!-- ==================================================================== -->
+
+  <xs:simpleType name="SystemTitleType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">8 octets, hex (16 hex chars).</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9A-Fa-f]{16}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="UuidType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ExtensionType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Forward-compatible extension point. Vendors MAY add elements from their
+        own namespace here without breaking validation against this schema.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:any namespace="##other" processContents="lax"
+              minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ds:Signature and xenc:CipherData are declared in the imported stubs. -->
+
+</xs:schema>
