@@ -123,14 +123,14 @@
       </Device>
 
       <!-- Second device in the batch. Non-G3 bearer => no NetworkCredentials. -->
-      <Device systemTitle="020000FFFE15871E">
+      <Device systemTitle="414D500099887766">
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
           <HardwareVersion>2.0.1</HardwareVersion>
           <FirmwareVersion>V010206</FirmwareVersion>
           <ManufacturingDate>2026-01-27</ManufacturingDate>
         </ManufacturingInfo>
-        <LogicalDevice logicalDeviceName="AMP020000FFFE15871E">
+        <LogicalDevice logicalDeviceName="AMP0099887766">
           <DlmsKeySet securitySuite="0" clientId="1" name="management">
             <Credential type="MasterKey">
               <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
