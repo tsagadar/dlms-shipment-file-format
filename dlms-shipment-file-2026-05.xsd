@@ -575,10 +575,15 @@
 
   <xs:simpleType name="SystemTitleType">
     <xs:annotation>
-      <xs:documentation xml:lang="en">8 octets, hex (16 hex chars).</xs:documentation>
+      <xs:documentation xml:lang="en">
+        8 octets, uppercase hex (16 uppercase hex characters). Uppercase is
+        mandatory so that string-equality comparisons (xs:unique, xs:keyref,
+        importer duplicate detection) are unambiguous. Importers SHOULD
+        normalize incoming titles to uppercase before storing.
+      </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">
-      <xs:pattern value="[0-9A-Fa-f]{16}"/>
+      <xs:pattern value="[0-9A-F]{16}"/>
     </xs:restriction>
   </xs:simpleType>
 
