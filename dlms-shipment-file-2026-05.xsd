@@ -240,12 +240,30 @@
   <xs:simpleType name="KekAlgorithmType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
-        Allowed KEK-wrapping algorithm URIs. v1: RSA-OAEP only. Future schema
-        versions add ECC / post-quantum KEM URIs here (additive only).
+        Allowed KEK-wrapping algorithm URIs.
+
+          rsa-oaep-mgf1p  (XMLEnc 1.0) - RSA-OAEP with MGF1-SHA-1 and
+                          SHA-1 digest. The v1 baseline; compatible with
+                          all XML Encryption implementations. Note that
+                          SHA-1 here applies only to the OAEP mask
+                          function, not to the wrapped key material
+                          itself. Organisations with a SHA-1 prohibition
+                          policy should use the XMLEnc 1.1 URI below.
+
+          rsa-oaep        (XMLEnc 1.1) - RSA-OAEP with algorithm
+                          parameters carried in child OAEPparams or
+                          ds:DigestMethod / xenc11:MGF elements, enabling
+                          SHA-256/MGF1-SHA-256. Preferred for new files
+                          where SHA-1 is unacceptable. Requires an XML
+                          Encryption 1.1 capable implementation.
+
+        Future schema versions add ECC / post-quantum KEM URIs here
+        (additive only - never remove an algorithm URI).
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:anyURI">
       <xs:enumeration value="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
+      <xs:enumeration value="http://www.w3.org/2009/xmlenc11#rsa-oaep"/>
     </xs:restriction>
   </xs:simpleType>
 
