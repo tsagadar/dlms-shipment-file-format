@@ -293,7 +293,12 @@
 
   <xs:complexType name="DevicesType">
     <xs:sequence>
-      <xs:element name="Device" type="tns:DeviceType" maxOccurs="unbounded"/>
+      <xs:element name="Device" type="tns:DeviceType" maxOccurs="unbounded">
+        <xs:unique name="LogicalDeviceNameUnique">
+          <xs:selector xpath="tns:LogicalDevice"/>
+          <xs:field xpath="@logicalDeviceName"/>
+        </xs:unique>
+      </xs:element>
     </xs:sequence>
   </xs:complexType>
 
@@ -320,7 +325,13 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="LogicalDevice" type="tns:LogicalDeviceType" maxOccurs="unbounded"/>
+      <xs:element name="LogicalDevice" type="tns:LogicalDeviceType" maxOccurs="unbounded">
+        <xs:unique name="DlmsKeySetSuiteClientUnique">
+          <xs:selector xpath="tns:DlmsKeySet"/>
+          <xs:field xpath="@securitySuite"/>
+          <xs:field xpath="@clientId"/>
+        </xs:unique>
+      </xs:element>
     </xs:sequence>
     <xs:attribute name="systemTitle" type="tns:SystemTitleType" use="required">
       <xs:annotation>
