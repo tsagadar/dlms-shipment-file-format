@@ -1,22 +1,26 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" id="2be2bc02-2f77-47f8-bd30-adbde7b2ac56" createdAt="2026-05-29T14:50:13Z" schemaVersion="2026-05" profile="shipment">
+<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" id="e2fa7f79-ee09-4914-a81e-d348533e79b6" createdAt="2026-05-29T17:44:19Z" schemaVersion="2026-05" profile="shipment">
   <Header>
     <Producer customer="VOLT" manufacturer="AmpTech"/>
     <!-- Single recipient => exactly one KEK, RSA-OAEP wrapped to the recipient's key. -->
     <Kek id="kek-1">
       <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
       <RecipientKey>
-        <SubjectKeyIdentifier>JXm9zsDg8wuOfI3msQJD1Gg6Su0=</SubjectKeyIdentifier>
+        <SubjectKeyIdentifier>D4tBbqGvT2iWb2swDYy1HmYFXdo=</SubjectKeyIdentifier>
       </RecipientKey>
       <xenc:CipherData>
-        <xenc:CipherValue>N/JrWXAPXBXDNHrqtolQekHt+6WK07z9pSQgHVsA0YvV2/hkLgnJ/HAZvvr5nn8uzXKM4+Ra5OC8uPfv8uAvRlPdDitJwLAhQZV/9MewBhaS+ggs/jqABdBTrKzYT3lOHrXoh+6tb+07UlW8SZcr5QPeVzM57qoPIVrw/U/RQWpCjWfGJx2XEZcC6kVzb1kcrmmbsbHavxUtw7vD4UfuBqT6djtkb0yjF95Xt5iFnGFNW04lo2VQrCuv3Cctl0aPTon1zH+Kgv64qjW0xp50A3tmh9w4pbpXYNtGtpP1LWYv83SiiR2HVExEi6yHcbw1jqkdVRRETrF6BFg4onsi5A==</xenc:CipherValue>
+        <xenc:CipherValue>YUqALUoe1vD5bldqbs+M2h/Ik8vWAiaRc8juCiKntzH+uOVLpRjigK49b1N7yoMoBBd93TS6MljOpkEJ/YiLHzBTBd84f7EhbqnKHPeTTuVnj7l97JSx4ZeL7gY8izrK2XIjz531HIKUdVOU+gXUhgVm+i9FKz7d8+UrhBWULuD/OP1BfMY/fzepsLFJipM0PR9Sk2rNf53fhTvXZhCJMSih89gzPpF0eB4n0imebOiPaJlMJRvGFkaF8NobIqL+TwEFvz+BbBxCswSdUPUIR6i1mluPnKgxlJzTzttO5KDpFyUMDoLmfv6vy68Qsd837jLQmNFXeyO32KQrqZTqlQ==</xenc:CipherValue>
       </xenc:CipherData>
     </Kek>
   </Header>
   <Body>
     <Devices>
       <!-- First device: G3-PLC meter, management + installer access. -->
-      <Device systemTitle="414D50677015871E" logicalDeviceName="AMP677015871E">
+      <Device systemTitle="414D50677015871E">
+        <Identifiers>
+          <LogicalDeviceName>AMP677015871E</LogicalDeviceName>
+          <G3PlcMacAddress>001BC50C7015871E</G3PlcMacAddress>
+        </Identifiers>
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
           <HardwareVersion>2.0.1</HardwareVersion>
@@ -30,7 +34,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>vOWHnLa9jUkWwumBfmfJ5mf0LugcDVuE</xenc:CipherValue>
+              <xenc:CipherValue>Ro6ffTIwoUMblfTpF4WfBMU5ULDQB0Kg</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -41,7 +45,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>P92Kp2uhStqpz9VML55g+aDYjZSmM4Ki</xenc:CipherValue>
+              <xenc:CipherValue>tkLV5aACu0ilHK5u4hukq9gbur22vt1m</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -49,7 +53,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>HBrfyz9RZlXov8Me0x2iT968mIQyxgds</xenc:CipherValue>
+              <xenc:CipherValue>FsuPB1ZgbgLGlGt44TrKla8SXK3AbBqY</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -57,7 +61,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>CWEAF9c75XwkNpbUGd7Gg4rx0MNj6OCY</xenc:CipherValue>
+              <xenc:CipherValue>Bj2P3tq8ciUMqSkuxYeeUSynJk4LBrSG</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -68,7 +72,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>VVwb0yh7I1yKsSxdaLkDbC8jYHEx2rETvfgxO/MwFUpM1Kxv/pKD9g==</xenc:CipherValue>
+              <xenc:CipherValue>JL+LBo9wYcE2awbQ2K+IQnjVQ5FBsNBRCKt7ZSBPW9VaXZKIQA066A==</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -76,7 +80,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>vP7A48gIhndK2/tU5CW+nvyxxokQjLlUCq8C2P5W3mJi38fvU8gpbA==</xenc:CipherValue>
+              <xenc:CipherValue>XYBD93KhOt407PM4ydVMLG45AxlsL1op+WhExrPPG8oVBgTE7XNJwQ==</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -87,7 +91,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>fpuY/sSWA+P+civHoHMG9UzIPmWPQ8iJ</xenc:CipherValue>
+              <xenc:CipherValue>t2HFTUCtEQqQzVZUL4XQshlAaQ0MwYTY</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -95,14 +99,25 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>11cdcqdgnDGKATw80TGlnBJBUCVjNcy0</xenc:CipherValue>
+              <xenc:CipherValue>uHypW8Y6bVoE4Z6Ml1w2ygC9OwPmgq5M</xenc:CipherValue>
+            </xenc:CipherData>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="Secret">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>43C1GZ4u9dfR1++u+IYDx34KXRiexFnM</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
         </CredentialGroup>
       </Device>
       <!-- Second device: non-G3 bearer, so no suite-independent group. -->
-      <Device systemTitle="414D500099887766" logicalDeviceName="AMP0099887766">
+      <Device systemTitle="414D500099887766">
+        <Identifiers>
+          <LogicalDeviceName>AMP0099887766</LogicalDeviceName>
+        </Identifiers>
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
           <HardwareVersion>2.0.1</HardwareVersion>
@@ -114,7 +129,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>BK6wpm+WxIpvPjO4tNRCd5/mK26RLVcv</xenc:CipherValue>
+              <xenc:CipherValue>a10CTJdye3paFaplv2DRzKTgvWwCZM9I</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -122,7 +137,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>Z8NyiGKgMn2/IvGuHHTHbX/IsKQW3GFq</xenc:CipherValue>
+              <xenc:CipherValue>JGig1ih6flniN/MvX5275EG9ZhhEiakF</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -130,7 +145,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>2bP1291j8dRWuPBDbwhjn1/rFqDhedyR</xenc:CipherValue>
+              <xenc:CipherValue>GUf15HHItFO75ut97JVwgXe92x0+FY2R</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>

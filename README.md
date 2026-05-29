@@ -90,13 +90,16 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │       └── xenc:CipherData    (RSA-OAEP-wrapped KEK)
 ├── Body
 │   └── Devices
-│       └── Device 1..N        (systemTitle + logicalDeviceName, both unique in file)
+│       └── Device 1..N        (systemTitle — unique in file)
+│           ├── Identifiers
+│           │   ├── LogicalDeviceName   (unique in file)
+│           │   └── G3PlcMacAddress     (optional; G3-PLC EUI-64, unique in file)
 │           ├── ManufacturingInfo   (optional; shipment profile)
 │           └── CredentialGroup 1..N  (securitySuite?, clientId?, name?)
 │               │   suite-scoped group: securitySuite + clientId present
 │               │     unique (securitySuite, clientId) per Device
 │               │     Credential type ∈ {MasterKey, GlobalUnicastEncryption,
-│               │                        GlobalAuthentication, Other}
+│               │                        GlobalAuthentication, Secret, Other}
 │               │   suite-independent group: securitySuite + clientId absent
 │               │     Credential type ∈ {EapPsk, Other}
 │               └── Credential
@@ -170,19 +173,33 @@ or a certificate thumbprint — never a free-text magic string. A `KeyName` may
 accompany these as a human label but cannot be the sole identifier.  This is
 enforced by the Schematron rules.
 
-### Device identity: COSEM system title (primary) + logical device name
+### Device identity: COSEM system title (primary) + Identifiers
 
 A meter is identified by its **COSEM system title** (8 octets, **uppercase**
 hex: 3-octet FLAG manufacturer id + serial), which is globally unique by
 construction and is the key used for all in-file references and the future
-logistics section. Uppercase is mandatory so that string-equality comparisons
-(schema uniqueness checks, importer duplicate detection) are unambiguous.
-Importers SHOULD normalize incoming titles to uppercase before comparison.
+logistics section. It stays a `Device` **attribute** so references and
+uniqueness checks read cleanly. Uppercase is mandatory so that string-equality
+comparisons (schema uniqueness checks, importer duplicate detection) are
+unambiguous. Importers SHOULD normalize incoming titles to uppercase before
+comparison.
 
-The **logical device name** is a secondary identity carried alongside the
-system title on the same `Device`. Both `systemTitle` and `logicalDeviceName`
-are required attributes and are unique within the file (enforced by schema).
-Credentials are grouped into `CredentialGroup` elements scoped directly to the `Device`.
+The remaining identities live in a required **`Identifiers`** child element,
+because they must reach the importer *together with the keys* — not only at
+shipment time:
+
+* **`LogicalDeviceName`** — the COSEM logical device name, a secondary identity
+  complementing the system title. Required and unique within the file
+  (enforced by schema).
+* **`G3PlcMacAddress`** — optional; the G3-PLC MAC-layer extended address (IEEE
+  **EUI-64**, 8 octets uppercase hex). Present only for meters on a G3-PLC
+  bearer, where an importer needs it to address the device on the PLC network.
+  Where present, unique within the file (enforced by schema).
+
+Keeping these in their own element (rather than piling on more `Device`
+attributes) leaves an obvious, additive home for further identifiers in later
+schema versions. Credentials are grouped into `CredentialGroup` elements scoped
+directly to the `Device`.
 
 ### Suite-scoped vs suite-independent credential groups
 
@@ -190,10 +207,10 @@ All credentials live in `CredentialGroup` elements. There are two flavours,
 distinguished by the presence or absence of `securitySuite` and `clientId`:
 
 **Suite-scoped group** (`securitySuite` + `clientId` present): holds DLMS
-application-layer keys (master key, GUEK, GAK). DLMS keys depend on the
-**security suite** (0/1 symmetric, 2 ECC), so the suite is a structured
-attribute on the group — not encoded into the key's name as some proprietary
-files do.
+application-layer keys (master key, GUEK, GAK) and the per-association LLS/HLS
+`Secret`. DLMS keys depend on the **security suite** (0/1 symmetric, 2 ECC), so
+the suite is a structured attribute on the group — not encoded into the key's
+name as some proprietary files do.
 
 **Suite-independent group** (`securitySuite` and `clientId` absent): holds
 secrets with no relationship to the DLMS suite, e.g. the G3-PLC **EAP-PSK**.
@@ -204,7 +221,7 @@ Credential placement is normative (enforced by Schematron):
 | Group | Allowed types |
 |-------|---------------|
 | Suite-independent (`securitySuite` absent) | `EapPsk`, `Other` |
-| Suite-scoped (`securitySuite` present) | `MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `Other` |
+| Suite-scoped (`securitySuite` present) | `MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `Secret`, `Other` |
 
 ### `clientId` is the key-set grouping key
 
@@ -219,12 +236,14 @@ device, so each suite-scoped `CredentialGroup` has an unambiguous import target.
 ### Opinionated, minimal v1 vocabulary
 
 The credential `type` enumeration is intentionally small:
-`MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `EapPsk`, and an
-`Other` escape hatch (which requires a companion `name`). These cover what real
-shipment files actually carry for normal operation. Additional standardized
-types (GBEK, HLS/LLS secrets, ECC private keys, certificates) are expected to
-return in later schema versions. The `Other` hatch lets a vendor ship a
-non-standard credential today without forking the schema.
+`MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `Secret`,
+`EapPsk`, and an `Other` escape hatch (which requires a companion `name`).
+`Secret` is the COSEM Association LN `secret` attribute — the shared secret for
+the LLS or HLS authentication process (not used by HLS-5, i.e. HLS-GMAC). These
+cover what real shipment files actually carry for normal operation. Additional
+standardized types (GBEK, ECC private keys, certificates) are expected to return
+in later schema versions. The `Other` hatch lets a vendor ship a non-standard
+credential today without forking the schema.
 
 ### No version numbers — `GeneratedAt` instead
 
@@ -290,9 +309,10 @@ Verifiers MUST:
 * Schema version is carried in the namespace URI **and** mirrored in
   `@schemaVersion`.
 * Referential integrity is enforced by the schema: every `KekRef/@kek` must
-  resolve to a `Kek/@id` (`xs:keyref`), device system titles and logical device
-  names are unique within the file, and `(securitySuite, clientId)` pairs are
-  unique within a device (`xs:unique`).
+  resolve to a `Kek/@id` (`xs:keyref`), device system titles, logical device
+  names, and (where present) G3-PLC MAC addresses are unique within the file,
+  and `(securitySuite, clientId)` pairs are unique within a device
+  (`xs:unique`).
 * Forward compatibility via `Extension` elements accepting `##other`
   namespaces with `processContents="lax"` — vendors extend without breaking
   validation.

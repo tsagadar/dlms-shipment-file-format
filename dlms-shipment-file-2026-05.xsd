@@ -80,8 +80,8 @@
     </xs:annotation>
 
     <!-- Referential integrity: every KekRef must resolve to a Kek/@id, and
-         every device system title and logical device name is unique within
-         the file. -->
+         every device system title, logical device name, and (where present)
+         G3-PLC MAC address is unique within the file. -->
     <xs:key name="KekIdKey">
       <xs:selector xpath="tns:Header/tns:Kek"/>
       <xs:field xpath="@id"/>
@@ -96,7 +96,14 @@
     </xs:unique>
     <xs:unique name="DeviceLogicalDeviceNameUnique">
       <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
-      <xs:field xpath="@logicalDeviceName"/>
+      <xs:field xpath="tns:Identifiers/tns:LogicalDeviceName"/>
+    </xs:unique>
+    <!-- G3PlcMacAddress is optional: xs:unique excludes devices that lack one
+         (incomplete key sequence), so only the MACs actually present are
+         required to be distinct. -->
+    <xs:unique name="DeviceG3PlcMacAddressUnique">
+      <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
+      <xs:field xpath="tns:Identifiers/tns:G3PlcMacAddress"/>
     </xs:unique>
   </xs:element>
 
@@ -340,11 +347,12 @@
     <xs:annotation>
       <xs:documentation xml:lang="en">
         A meter. Identified by its COSEM system title (the primary,
-        globally-unique key used for references) and its COSEM logical device
-        name. Credentials are grouped into one or more CredentialGroup elements.
-        Optional manufacturing metadata is present only in the shipment profile
-        and is simply absent in transfer files - the element shape does not
-        change between profiles.
+        globally-unique key used for references), carried as an attribute, plus
+        the further identities in the Identifiers element (logical device name
+        and, for G3-PLC meters, the MAC address). Credentials are grouped into
+        one or more CredentialGroup elements. Optional manufacturing metadata is
+        present only in the shipment profile and is simply absent in transfer
+        files - the element shape does not change between profiles.
 
         A CredentialGroup with securitySuite and clientId holds DLMS
         application-layer keys for that (suite, client) combination. A
@@ -357,6 +365,15 @@
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
+      <xs:element name="Identifiers" type="tns:IdentifiersType">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Additional device identities that travel with the keys (core; both
+            profiles). The system title stays on the Device attribute; this
+            element carries the remaining identifiers.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="ManufacturingInfo" type="tns:ManufacturingInfoType" minOccurs="0">
         <xs:annotation>
           <xs:documentation xml:lang="en">
@@ -378,14 +395,38 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="logicalDeviceName" type="xs:string" use="required">
-      <xs:annotation>
-        <xs:documentation xml:lang="en">
-          COSEM logical device name (the secondary identity, complementing the
-          device system title). Unique within the file.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="IdentifiersType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Device identities beyond the system title, carried because they have to
+        reach the importer together with the keys - not just at shipment time.
+        The COSEM logical device name is always present; the G3-PLC MAC address
+        is present only for meters on a G3-PLC bearer. Further identifiers are
+        added here in future schema versions (additive only).
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="LogicalDeviceName" type="xs:string">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            COSEM logical device name (the secondary identity, complementing the
+            device system title). Unique within the file.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="G3PlcMacAddress" type="tns:G3PlcMacAddressType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            G3-PLC MAC-layer extended address (IEEE EUI-64). Present only for
+            meters on a G3-PLC bearer; an importer needs it - alongside the
+            keys - to address the device on the PLC network. Unique within the
+            file where present.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="ManufacturingInfoType">
@@ -413,8 +454,9 @@
         A group of credentials that share the same scope. Two flavours:
 
         Suite-scoped (securitySuite + clientId present): holds DLMS
-        application-layer keys (MasterKey, GUEK, GAK) for one COSEM client
-        under one security suite. clientId is the grouping key: one security
+        application-layer keys (MasterKey, GUEK, GAK) and the per-association
+        LLS/HLS Secret for one COSEM client under one security suite. clientId
+        is the grouping key: one security
         setup is NOT shared across associations, so a single clientId
         faithfully identifies the key set. Schematron enforces that EapPsk
         must not appear here.
@@ -534,6 +576,11 @@
                                      unwrap the others). Suite-scoped groups only.
           GlobalUnicastEncryption  - GUEK. Suite-scoped groups only.
           GlobalAuthentication     - GAK. Suite-scoped groups only.
+          Secret                   - LLS/HLS authentication secret (the COSEM
+                                     Association LN "secret" attribute), used for
+                                     the LLS or HLS authentication process. Not
+                                     used by HLS-5 (HLS-GMAC). Suite-scoped groups
+                                     only.
           EapPsk                   - G3-PLC network PSK. Suite-independent
                                      groups only.
           Other                    - escape hatch; requires @name. Lets a vendor
@@ -549,6 +596,7 @@
       <xs:enumeration value="MasterKey"/>
       <xs:enumeration value="GlobalUnicastEncryption"/>
       <xs:enumeration value="GlobalAuthentication"/>
+      <xs:enumeration value="Secret"/>
       <xs:enumeration value="EapPsk"/>
       <xs:enumeration value="Other"/>
     </xs:restriction>
@@ -601,6 +649,19 @@
         mandatory so that string-equality comparisons (xs:unique, xs:keyref,
         importer duplicate detection) are unambiguous. Importers SHOULD
         normalize incoming titles to uppercase before storing.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9A-F]{16}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="G3PlcMacAddressType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        IEEE EUI-64 extended address: 8 octets, uppercase hex (16 uppercase hex
+        characters). Uppercase mirrors SystemTitleType so string-equality
+        comparisons are unambiguous.
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">

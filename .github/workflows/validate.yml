@@ -59,6 +59,13 @@ jobs:
             echo "FAIL: expected XSD rejection" && exit 1
           fi
 
+      - name: XSD — invalid-duplicate-g3plcmacaddress is rejected
+        run: |
+          if xmllint --schema dlms-shipment-file-2026-05.xsd \
+              test/invalid-duplicate-g3plcmacaddress.xml --noout 2>/dev/null; then
+            echo "FAIL: expected XSD rejection" && exit 1
+          fi
+
       # ------------------------------------------------------------------ #
       # Schematron: positive example must pass                              #
       # ------------------------------------------------------------------ #

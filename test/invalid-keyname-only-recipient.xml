@@ -25,7 +25,10 @@
   </Header>
   <Body>
     <Devices>
-      <Device systemTitle="0102030405060708" logicalDeviceName="LD1">
+      <Device systemTitle="0102030405060708">
+        <Identifiers>
+          <LogicalDeviceName>LD1</LogicalDeviceName>
+        </Identifiers>
         <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>

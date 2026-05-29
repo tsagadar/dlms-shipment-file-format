@@ -26,7 +26,12 @@ _ALGO_ENVELOPED = "http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 _ALGO_SHA256 = "http://www.w3.org/2001/04/xmlenc#sha256"
 
 CredentialType = Literal[
-    "MasterKey", "GlobalUnicastEncryption", "GlobalAuthentication", "EapPsk", "Other"
+    "MasterKey",
+    "GlobalUnicastEncryption",
+    "GlobalAuthentication",
+    "Secret",
+    "EapPsk",
+    "Other",
 ]
 
 
@@ -63,6 +68,7 @@ class Device:
     system_title: str  # 16 uppercase hex chars, e.g. "414D50677015871E"
     logical_device_name: str
     credential_groups: list[CredentialGroup]
+    g3_plc_mac_address: str | None = None  # EUI-64, 16 uppercase hex chars; G3-PLC meters only
     manufacturing_info: ManufacturingInfo | None = None
     comment: str | None = None  # emitted as an XML comment before the device
 
@@ -171,8 +177,18 @@ class ShipmentFileBuilder:
             parent,
             f"{{{_NS}}}Device",
             systemTitle=device.system_title,
-            logicalDeviceName=device.logical_device_name,
         )
+
+        # Identifiers carry the non-systemTitle identities; element order follows
+        # the XSD sequence in IdentifiersType.
+        identifiers_el = etree.SubElement(device_el, f"{{{_NS}}}Identifiers")
+        etree.SubElement(identifiers_el, f"{{{_NS}}}LogicalDeviceName").text = (
+            device.logical_device_name
+        )
+        if device.g3_plc_mac_address:
+            etree.SubElement(identifiers_el, f"{{{_NS}}}G3PlcMacAddress").text = (
+                device.g3_plc_mac_address
+            )
 
         if device.manufacturing_info is not None:
             self._build_manufacturing_info(device_el, device.manufacturing_info)

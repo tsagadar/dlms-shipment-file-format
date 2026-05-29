@@ -23,6 +23,8 @@ _REPO_ROOT = Path(__file__).parent.parent
 _ST1 = "414D50677015871E"  # G3-PLC meter
 _ST2 = "414D500099887766"  # non-G3 meter
 
+_MAC1 = "001BC50C7015871E"  # G3-PLC EUI-64 of the first meter
+
 _KEK_COMMENT = "Single recipient => exactly one KEK, RSA-OAEP wrapped to the recipient's key."
 
 
@@ -41,6 +43,7 @@ def _devices(include_manufacturing: bool) -> list[Device]:
         Device(
             system_title=_ST1,
             logical_device_name="AMP677015871E",
+            g3_plc_mac_address=_MAC1,
             comment="First device: G3-PLC meter, management + installer access.",
             manufacturing_info=ManufacturingInfo(
                 device_type_designation="F2-TD-I30A2R2C2D2",
@@ -105,6 +108,11 @@ def _devices(include_manufacturing: bool) -> list[Device]:
                         Credential(
                             "GlobalAuthentication",
                             _key(_ST1, "GAK-installer"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            "Secret",
+                            _key(_ST1, "Secret-installer"),
                             generated_at=_GENERATED_AT,
                         ),
                     ],

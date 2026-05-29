@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  INVALID: Two Device elements with the same @logicalDeviceName.
+  INVALID: Two Device elements with the same Identifiers/LogicalDeviceName.
   Expected failure: XSD xs:unique DeviceLogicalDeviceNameUnique.
 -->
 <ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
@@ -23,7 +23,10 @@
   <Body>
     <Devices>
       <!-- Both devices share the same logical device name — invalid -->
-      <Device systemTitle="0102030405060708" logicalDeviceName="SAMENAME">
+      <Device systemTitle="0102030405060708">
+        <Identifiers>
+          <LogicalDeviceName>SAMENAME</LogicalDeviceName>
+        </Identifiers>
         <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
@@ -32,7 +35,10 @@
           </Credential>
         </CredentialGroup>
       </Device>
-      <Device systemTitle="0807060504030201" logicalDeviceName="SAMENAME">
+      <Device systemTitle="0807060504030201">
+        <Identifiers>
+          <LogicalDeviceName>SAMENAME</LogicalDeviceName>
+        </Identifiers>
         <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>

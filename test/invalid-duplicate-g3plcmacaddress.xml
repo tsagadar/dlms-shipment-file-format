@@ -1,11 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  INVALID: Device/@systemTitle contains lowercase hex.
-  Expected failure: XSD pattern [0-9A-F]{16} rejects mixed-case.
+  INVALID: Two Device elements with the same Identifiers/G3PlcMacAddress.
+  Expected failure: XSD xs:unique DeviceG3PlcMacAddressUnique.
+  (System titles and logical device names differ, so only the MAC collides.)
 -->
 <ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
               xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
-              id="00000000-0000-0000-0000-000000000001"
+              id="00000000-0000-0000-0000-00000000000a"
               createdAt="2026-01-01T00:00:00Z"
               schemaVersion="2026-05"
               allowPlaintextKeys="false"
@@ -22,10 +23,24 @@
   </Header>
   <Body>
     <Devices>
-      <!-- System title contains lowercase hex — invalid -->
-      <Device systemTitle="4d4143677015871e">
+      <!-- Both devices carry the same G3-PLC MAC address — invalid -->
+      <Device systemTitle="0102030405060708">
         <Identifiers>
           <LogicalDeviceName>LD1</LogicalDeviceName>
+          <G3PlcMacAddress>001BC50C7015871E</G3PlcMacAddress>
+        </Identifiers>
+        <CredentialGroup securitySuite="0" clientId="1">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </CredentialGroup>
+      </Device>
+      <Device systemTitle="0807060504030201">
+        <Identifiers>
+          <LogicalDeviceName>LD2</LogicalDeviceName>
+          <G3PlcMacAddress>001BC50C7015871E</G3PlcMacAddress>
         </Identifiers>
         <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
