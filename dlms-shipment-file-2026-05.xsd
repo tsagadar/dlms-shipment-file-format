@@ -490,9 +490,8 @@
         AES-256 key-wrapped with padding (RFC 5649) under the Kek named by
         KekRef.
 
-        KeyCheckValue lets an importer confirm a correct unwrap without exposing
-        the key. GeneratedAt provides an ordering signal so an importer can
-        avoid overwriting a newer key with an older one (the format carries no
+        GeneratedAt provides an ordering signal so an importer can avoid
+        overwriting a newer key with an older one (the format carries no
         explicit version number).
       </xs:documentation>
     </xs:annotation>
@@ -514,7 +513,6 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="KeyCheckValue" type="tns:KeyCheckValueType" minOccurs="0"/>
       <xs:element name="GeneratedAt" type="xs:dateTime" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute name="type" type="tns:CredentialTypeEnum" use="required"/>
@@ -590,22 +588,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-  </xs:complexType>
-
-  <xs:complexType name="KeyCheckValueType">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">
-        Key check value. Convention: AES-encrypt an all-zero block under the
-        (unwrapped) key and keep the leading octets (typically 3). Lets an
-        importer verify a correct unwrap without revealing the key.
-      </xs:documentation>
-    </xs:annotation>
-    <xs:simpleContent>
-      <xs:extension base="xs:hexBinary">
-        <xs:attribute name="method" type="xs:anyURI" use="optional"
-                      default="https://open-metering.org/schemas/dlms-shipment-file/2026-05#kcv-aes-zeroblock"/>
-      </xs:extension>
-    </xs:simpleContent>
   </xs:complexType>
 
   <!-- ==================================================================== -->

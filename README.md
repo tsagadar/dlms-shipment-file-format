@@ -98,7 +98,6 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │                   ├── EncryptionMethod (kw-aes256-pad | none)
 │                   ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
 │                   ├── xenc:CipherData  (AES-key-wrapped key)
-│                   ├── KeyCheckValue    (optional)
 │                   └── GeneratedAt      (optional)
 └── ds:Signature        (optional, enveloped, covers whole document)
 ```
@@ -230,13 +229,6 @@ each credential may carry an optional `GeneratedAt` timestamp giving importers a
 "don't go backwards" ordering signal. The file also carries a top-level
 `createdAt` and a unique `id` for freshness and duplicate-import detection.
 
-### Key check value
-
-Each credential may carry a `KeyCheckValue` so an importer can confirm a correct
-unwrap (and that it is loading the right key into the right slot) **without
-exposing the key** — convention: AES-encrypt an all-zero block under the
-unwrapped key, keep the leading octets.
-
 ### Plaintext keys: a per-key reality, gated by the header
 
 Production files never contain plaintext keys. For sample/lab meters the header
@@ -315,8 +307,9 @@ Verifiers MUST:
   failed device system title, logical device name, security suite, and client id.
 * **Unwrap order:** recover the KEK named by each `KekRef` (one RSA-OAEP
   operation per KEK), then AES-key-unwrap each credential.
-* **Verify before store:** check each `KeyCheckValue` after unwrap; honor
-  `GeneratedAt` to avoid downgrading a key.
+* **Verify before store:** a failed AES key-unwrap (RFC 5649 carries its own
+  integrity check) means reject the credential; honor `GeneratedAt` to avoid
+  downgrading a key.
 * **Policy gates:** enforce signature policy and the `allowPlaintextKeys` gate
   per local rules before trusting any key material.
 
