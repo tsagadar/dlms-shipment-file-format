@@ -47,10 +47,10 @@ jobs:
             echo "FAIL: expected XSD rejection" && exit 1
           fi
 
-      - name: XSD — invalid-duplicate-dlmskeyset-identity is rejected
+      - name: XSD — invalid-duplicate-credentialgroup-identity is rejected
         run: |
           if xmllint --schema dlms-shipment-file-2026-05.xsd \
-              test/invalid-duplicate-dlmskeyset-identity.xml --noout 2>/dev/null; then
+              test/invalid-duplicate-credentialgroup-identity.xml --noout 2>/dev/null; then
             echo "FAIL: expected XSD rejection" && exit 1
           fi
 
@@ -84,7 +84,7 @@ jobs:
               "test/invalid-plaintext-no-flag.xml",
               "test/invalid-kw-no-kekref.xml",
               "test/invalid-other-no-name.xml",
-              "test/invalid-eappsk-in-dlmskeyset.xml",
+              "test/invalid-eappsk-in-suite-scoped-group.xml",
           ]
 
           failures = []

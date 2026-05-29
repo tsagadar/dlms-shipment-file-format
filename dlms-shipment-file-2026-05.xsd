@@ -43,10 +43,10 @@
       Validation note: XSD validation alone is necessary but NOT sufficient
       for production use. This schema cannot express conditional rules such as
       "kw-aes256-pad requires KekRef" or placement rules such as "EapPsk
-      belongs only in NetworkCredentials". Those constraints are normatively
-      enforced by dlms-shipment.sch (ISO Schematron). A conformance-valid file
-      must pass both validators. Production importers MUST reject files that
-      fail either check.
+      belongs only in suite-independent CredentialGroups". Those constraints
+      are normatively enforced by dlms-shipment.sch (ISO Schematron). A
+      conformance-valid file must pass both validators. Production importers
+      MUST reject files that fail either check.
     </xs:documentation>
   </xs:annotation>
 
@@ -327,8 +327,8 @@
   <xs:complexType name="DevicesType">
     <xs:sequence>
       <xs:element name="Device" type="tns:DeviceType" maxOccurs="unbounded">
-        <xs:unique name="DlmsKeySetSuiteClientUnique">
-          <xs:selector xpath="tns:DlmsKeySet"/>
+        <xs:unique name="CredentialGroupIdentityUnique">
+          <xs:selector xpath="tns:CredentialGroup"/>
           <xs:field xpath="@securitySuite"/>
           <xs:field xpath="@clientId"/>
         </xs:unique>
@@ -341,14 +341,16 @@
       <xs:documentation xml:lang="en">
         A meter. Identified by its COSEM system title (the primary,
         globally-unique key used for references) and its COSEM logical device
-        name. DLMS application-layer keys are scoped directly here. Optional
-        manufacturing metadata is present only in the shipment profile and is
-        simply absent in transfer files - the element shape does not change
-        between profiles.
+        name. Credentials are grouped into one or more CredentialGroup elements.
+        Optional manufacturing metadata is present only in the shipment profile
+        and is simply absent in transfer files - the element shape does not
+        change between profiles.
 
-        NetworkCredentials (e.g. the G3-PLC EAP-PSK) are suite-INDEPENDENT and
-        therefore sit as a sibling of the suite-scoped DlmsKeySet blocks, not
-        inside them. NetworkCredentials is optional - not every meter has a PSK.
+        A CredentialGroup with securitySuite and clientId holds DLMS
+        application-layer keys for that (suite, client) combination. A
+        CredentialGroup without those attributes holds suite-independent secrets
+        (e.g. the G3-PLC EAP-PSK). The Schematron rules enforce which credential
+        types belong in each kind of group.
 
         PARTIAL FAILURE: importers SHOULD reject a single malformed Device and
         continue importing the rest of the file.
@@ -365,8 +367,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="NetworkCredentials" type="tns:NetworkCredentialsType" minOccurs="0"/>
-      <xs:element name="DlmsKeySet" type="tns:DlmsKeySetType" maxOccurs="unbounded"/>
+      <xs:element name="CredentialGroup" type="tns:CredentialGroupType" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="systemTitle" type="tns:SystemTitleType" use="required">
       <xs:annotation>
@@ -404,57 +405,58 @@
     </xs:sequence>
   </xs:complexType>
 
-  <!-- = Network (suite-independent) credentials = -->
+  <!-- = Credential group = -->
 
-  <xs:complexType name="NetworkCredentialsType">
+  <xs:complexType name="CredentialGroupType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
-        Suite-independent network-layer secrets. In v1 this carries the EAP-PSK
-        used by the G3-PLC network. Optional because non-G3 bearers may not use
-        a PSK at all.
+        A group of credentials that share the same scope. Two flavours:
+
+        Suite-scoped (securitySuite + clientId present): holds DLMS
+        application-layer keys (MasterKey, GUEK, GAK) for one COSEM client
+        under one security suite. clientId is the grouping key: one security
+        setup is NOT shared across associations, so a single clientId
+        faithfully identifies the key set. Schematron enforces that EapPsk
+        must not appear here.
+
+        Suite-independent (securitySuite and clientId absent): holds secrets
+        that are not tied to a DLMS security suite, e.g. the G3-PLC EAP-PSK.
+        Schematron enforces that only EapPsk and Other may appear here.
+
+        name is an optional human-readable label (e.g. "management",
+        "installer"). Descriptive only; not a key.
+
+        The XSD uniqueness constraint CredentialGroupIdentityUnique (per
+        Device) ensures no two suite-scoped groups share the same
+        (securitySuite, clientId) pair. Suite-independent groups (fields
+        absent) are excluded from that check by xs:unique semantics.
       </xs:documentation>
     </xs:annotation>
     <xs:sequence>
       <xs:element name="Credential" type="tns:CredentialType" maxOccurs="unbounded"/>
     </xs:sequence>
-  </xs:complexType>
-
-  <!-- = DLMS (suite-scoped) key set = -->
-
-  <xs:complexType name="DlmsKeySetType">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">
-        The set of DLMS application-layer keys for one client (access level)
-        under one security suite.
-
-        clientId is the grouping key: this format is opinionated that one
-        security setup is NOT shared across associations, so a single client id
-        faithfully identifies the key set. name is an optional human-readable
-        label (e.g. "management", "installer").
-      </xs:documentation>
-    </xs:annotation>
-    <xs:sequence>
-      <xs:element name="Credential" type="tns:CredentialType" maxOccurs="unbounded"/>
-    </xs:sequence>
-    <xs:attribute name="securitySuite" type="tns:SecuritySuiteType" use="required">
+    <xs:attribute name="securitySuite" type="tns:SecuritySuiteType" use="optional">
       <xs:annotation>
         <xs:documentation xml:lang="en">
-          DLMS/COSEM security suite (0, 1, or 2) governing the keys in this set.
+          DLMS/COSEM security suite (0, 1, or 2). Present for suite-scoped
+          groups; absent for suite-independent groups. Must be paired with
+          clientId (enforced by Schematron).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="clientId" type="tns:ClientIdType" use="required">
+    <xs:attribute name="clientId" type="tns:ClientIdType" use="optional">
       <xs:annotation>
         <xs:documentation xml:lang="en">
-          COSEM client SAP / association id that these keys belong to. The
-          grouping key for the set.
+          COSEM client SAP / association id. Present for suite-scoped groups;
+          absent for suite-independent groups. Must be paired with securitySuite
+          (enforced by Schematron).
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="name" type="xs:string" use="optional">
       <xs:annotation>
         <xs:documentation xml:lang="en">
-          Optional human-readable label for the access level. Descriptive only.
+          Optional human-readable label. Descriptive only.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -531,16 +533,18 @@
         Opinionated v1 vocabulary, COSEM-aligned.
 
           MasterKey                - meter master key (KEK on the meter; used to
-                                     unwrap the others). DlmsKeySet only.
-          GlobalUnicastEncryption  - GUEK. DlmsKeySet only.
-          GlobalAuthentication     - GAK. DlmsKeySet only.
-          EapPsk                   - G3-PLC network PSK. NetworkCredentials only.
+                                     unwrap the others). Suite-scoped groups only.
+          GlobalUnicastEncryption  - GUEK. Suite-scoped groups only.
+          GlobalAuthentication     - GAK. Suite-scoped groups only.
+          EapPsk                   - G3-PLC network PSK. Suite-independent
+                                     groups only.
           Other                    - escape hatch; requires @name. Lets a vendor
                                      ship a non-standard credential without
-                                     forking the schema.
+                                     forking the schema. Valid in any group.
 
-        Placement (which type is valid in which container) is described in the
-        README; v1 keeps a single shared enumeration for vocabulary simplicity.
+        Placement (which type is valid in which kind of CredentialGroup) is
+        enforced by Schematron; v1 keeps a single shared enumeration for
+        vocabulary simplicity.
       </xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string">

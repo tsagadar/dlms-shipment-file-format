@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import Literal
@@ -39,10 +39,10 @@ class Credential:
 
 
 @dataclass
-class DlmsKeySet:
-    security_suite: int  # 0, 1, or 2
-    client_id: int  # 0–127
+class CredentialGroup:
     credentials: list[Credential]
+    security_suite: int | None = None  # present for suite-scoped groups (0, 1, or 2)
+    client_id: int | None = None       # present for suite-scoped groups (0–127)
     name: str | None = None
 
 
@@ -50,8 +50,7 @@ class DlmsKeySet:
 class Device:
     system_title: str  # 16 uppercase hex chars, e.g. "414D50677015871E"
     logical_device_name: str
-    key_sets: list[DlmsKeySet]
-    network_credentials: list[Credential] = field(default_factory=list)
+    credential_groups: list[CredentialGroup]
 
 
 class ShipmentFileBuilder:
@@ -150,21 +149,17 @@ class ShipmentFileBuilder:
             logicalDeviceName=device.logical_device_name,
         )
 
-        if device.network_credentials:
-            net_creds_el = etree.SubElement(device_el, f"{{{_NS}}}NetworkCredentials")
-            for cred in device.network_credentials:
-                self._build_credential(net_creds_el, cred)
-
-        for key_set in device.key_sets:
-            ks_attribs = {
-                "securitySuite": str(key_set.security_suite),
-                "clientId": str(key_set.client_id),
-            }
-            if key_set.name:
-                ks_attribs["name"] = key_set.name
-            ks_el = etree.SubElement(device_el, f"{{{_NS}}}DlmsKeySet", attrib=ks_attribs)
-            for cred in key_set.credentials:
-                self._build_credential(ks_el, cred)
+        for group in device.credential_groups:
+            attribs: dict[str, str] = {}
+            if group.security_suite is not None:
+                attribs["securitySuite"] = str(group.security_suite)
+            if group.client_id is not None:
+                attribs["clientId"] = str(group.client_id)
+            if group.name:
+                attribs["name"] = group.name
+            group_el = etree.SubElement(device_el, f"{{{_NS}}}CredentialGroup", attrib=attribs)
+            for cred in group.credentials:
+                self._build_credential(group_el, cred)
 
     def _build_credential(self, parent: etree._Element, cred: Credential) -> None:
         cred_attribs: dict[str, str] = {"type": cred.type}

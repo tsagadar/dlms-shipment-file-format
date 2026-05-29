@@ -41,7 +41,7 @@ if not ok: print(etree.tostring(sch.validation_report, pretty_print=True).decode
 **Schema-valid** — passes `xmllint --schema dlms-shipment-file-2026-05.xsd`.
 Necessary but not sufficient for production use.  The XSD cannot express
 conditional rules (e.g. "kw-aes256-pad requires KekRef") or placement rules
-(e.g. "EapPsk belongs only in NetworkCredentials").
+(e.g. "EapPsk belongs only in suite-independent CredentialGroups").
 
 **Conformance-valid** — passes both the XSD and `dlms-shipment.sch`.
 Required for production use.  The Schematron file enforces all the
@@ -87,19 +87,19 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │   └── Devices
 │       └── Device 1..N        (systemTitle + logicalDeviceName, both unique in file)
 │           ├── ManufacturingInfo   (optional; shipment profile)
-│           ├── NetworkCredentials  (optional; suite-independent)
-│           │   └── Credential type ∈ {EapPsk, Other}
-│           └── DlmsKeySet 1..N     (securitySuite, clientId, name)
-│               │                   unique (securitySuite, clientId) per Device
-│               └── Credential type ∈ {MasterKey,
-│                                      GlobalUnicastEncryption,
-│                                      GlobalAuthentication,
-│                                      Other}
+│           └── CredentialGroup 1..N  (securitySuite?, clientId?, name?)
+│               │   suite-scoped group: securitySuite + clientId present
+│               │     unique (securitySuite, clientId) per Device
+│               │     Credential type ∈ {MasterKey, GlobalUnicastEncryption,
+│               │                        GlobalAuthentication, Other}
+│               │   suite-independent group: securitySuite + clientId absent
+│               │     Credential type ∈ {EapPsk, Other}
+│               └── Credential
 │                   ├── EncryptionMethod (kw-aes256-pad | none)
 │                   ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
 │                   ├── xenc:CipherData  (AES-key-wrapped key)
 │                   ├── KeyCheckValue    (optional)
-│                   └── GeneratedAt       (optional)
+│                   └── GeneratedAt      (optional)
 └── ds:Signature        (optional, enveloped, covers whole document)
 ```
 
@@ -178,34 +178,39 @@ Importers SHOULD normalize incoming titles to uppercase before comparison.
 The **logical device name** is a secondary identity carried alongside the
 system title on the same `Device`. Both `systemTitle` and `logicalDeviceName`
 are required attributes and are unique within the file (enforced by schema).
-Keys (`NetworkCredentials`, `DlmsKeySet`) are scoped directly to the `Device`.
+Credentials are grouped into `CredentialGroup` elements scoped directly to the `Device`.
 
-### Suite-scoped keys vs suite-independent network secrets
+### Suite-scoped vs suite-independent credential groups
 
-DLMS application-layer keys (master key, GUEK, GAK) depend on the **security
-suite** (0/1 symmetric, 2 ECC), so they live inside a `DlmsKeySet` that carries
-`securitySuite` as a structured attribute — not encoded into the key's name as
-some proprietary files do. The **EAP-PSK** is a G3-PLC network-layer secret with
-no relationship to the DLMS suite, so it sits in a sibling `NetworkCredentials`
-block, not inside a suite-scoped set. `NetworkCredentials` is optional because
-not every meter has a PSK.
+All credentials live in `CredentialGroup` elements. There are two flavours,
+distinguished by the presence or absence of `securitySuite` and `clientId`:
+
+**Suite-scoped group** (`securitySuite` + `clientId` present): holds DLMS
+application-layer keys (master key, GUEK, GAK). DLMS keys depend on the
+**security suite** (0/1 symmetric, 2 ECC), so the suite is a structured
+attribute on the group — not encoded into the key's name as some proprietary
+files do.
+
+**Suite-independent group** (`securitySuite` and `clientId` absent): holds
+secrets with no relationship to the DLMS suite, e.g. the G3-PLC **EAP-PSK**.
+Not every meter needs one; it is simply omitted for non-G3 bearers.
 
 Credential placement is normative (enforced by Schematron):
 
-| Container | Allowed types |
-|-----------|---------------|
-| `NetworkCredentials` | `EapPsk`, `Other` |
-| `DlmsKeySet` | `MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `Other` |
+| Group | Allowed types |
+|-------|---------------|
+| Suite-independent (`securitySuite` absent) | `EapPsk`, `Other` |
+| Suite-scoped (`securitySuite` present) | `MasterKey`, `GlobalUnicastEncryption`, `GlobalAuthentication`, `Other` |
 
 ### `clientId` is the key-set grouping key
 
 This format is opinionated that a security setup is **not** shared across
-associations, so a single COSEM `clientId` faithfully identifies a key set. An
-optional `name` ("management", "installer") is descriptive only. This avoids the
-proprietary practice of mangling role names into key identifiers.
+associations, so a single COSEM `clientId` faithfully identifies a credential
+group. An optional `name` ("management", "installer") is descriptive only. This
+avoids the proprietary practice of mangling role names into key identifiers.
 
 The schema enforces uniqueness of `(securitySuite, clientId)` pairs within a
-device, so each key set has an unambiguous import target.
+device, so each suite-scoped `CredentialGroup` has an unambiguous import target.
 
 ### Opinionated, minimal v1 vocabulary
 
@@ -303,10 +308,10 @@ Verifiers MUST:
 
 * **Partial failure:** reject a single malformed `Device` and continue importing
   the remaining devices; do not fail the whole file for one bad record.
-  Atomicity is at the `DlmsKeySet` level: either all credentials in a key set
-  are imported successfully, or none of them are. A half-imported key set
+  Atomicity is at the `CredentialGroup` level: either all credentials in a group
+  are imported successfully, or none of them are. A half-imported group
   (e.g. MasterKey written but GUEK failed) is a dangerous half-state; importers
-  must roll back any keys already stored for that key set on error. Log the
+  must roll back any keys already stored for that group on error. Log the
   failed device system title, logical device name, security suite, and client id.
 * **Unwrap order:** recover the KEK named by each `KekRef` (one RSA-OAEP
   operation per KEK), then AES-key-unwrap each credential.

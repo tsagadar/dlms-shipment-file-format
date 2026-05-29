@@ -24,22 +24,22 @@
     <Devices>
       <!-- Both devices share the same logical device name — invalid -->
       <Device systemTitle="0102030405060708" logicalDeviceName="SAMENAME">
-        <DlmsKeySet securitySuite="0" clientId="1">
+        <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
       </Device>
       <Device systemTitle="0807060504030201" logicalDeviceName="SAMENAME">
-        <DlmsKeySet securitySuite="0" clientId="1">
+        <CredentialGroup securitySuite="0" clientId="1">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
       </Device>
     </Devices>
   </Body>

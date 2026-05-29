@@ -29,8 +29,8 @@
           <ConfigurationHash>9225b35007b219b3985565b38e826c72</ConfigurationHash>
         </ManufacturingInfo>
 
-        <!-- Suite-independent network secret. Present because this is a G3 meter. -->
-        <NetworkCredentials>
+        <!-- Suite-independent group: network secret, no securitySuite/clientId. Present because this is a G3 meter. -->
+        <CredentialGroup>
           <Credential type="EapPsk">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
@@ -40,10 +40,10 @@
             <KeyCheckValue>1a2b3c</KeyCheckValue>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
-        </NetworkCredentials>
+        </CredentialGroup>
 
         <!-- Management access level, security suite 0. -->
-        <DlmsKeySet securitySuite="0" clientId="1" name="management">
+        <CredentialGroup securitySuite="0" clientId="1" name="management">
           <Credential type="MasterKey">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
@@ -71,10 +71,10 @@
             <KeyCheckValue>a3b4c5</KeyCheckValue>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
 
         <!-- Same access level provisioned for suite 2 (ECC) as well. -->
-        <DlmsKeySet securitySuite="2" clientId="1" name="management">
+        <CredentialGroup securitySuite="2" clientId="1" name="management">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
@@ -93,10 +93,10 @@
             <KeyCheckValue>091a2b</KeyCheckValue>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
 
         <!-- Installer access level, suite 0. -->
-        <DlmsKeySet securitySuite="0" clientId="2" name="installer">
+        <CredentialGroup securitySuite="0" clientId="2" name="installer">
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
@@ -115,11 +115,11 @@
             <KeyCheckValue>6f7081</KeyCheckValue>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
 
       </Device>
 
-      <!-- Second device in the batch. Non-G3 bearer => no NetworkCredentials. -->
+      <!-- Second device in the batch. Non-G3 bearer => no suite-independent group. -->
       <Device systemTitle="414D500099887766" logicalDeviceName="AMP0099887766">
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
@@ -127,7 +127,7 @@
           <FirmwareVersion>V010206</FirmwareVersion>
           <ManufacturingDate>2026-01-27</ManufacturingDate>
         </ManufacturingInfo>
-        <DlmsKeySet securitySuite="0" clientId="1" name="management">
+        <CredentialGroup securitySuite="0" clientId="1" name="management">
           <Credential type="MasterKey">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
@@ -155,7 +155,7 @@
             <KeyCheckValue>f80192</KeyCheckValue>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
       </Device>
 
     </Devices>

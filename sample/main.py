@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from shipment import Credential, Device, DlmsKeySet, ShipmentFileBuilder
+from shipment import Credential, CredentialGroup, Device, ShipmentFileBuilder
 
 _GENERATED_AT = datetime(2026, 1, 27, 22, 43, 0, tzinfo=UTC)
 
@@ -34,15 +34,17 @@ def create_sample_shipment(
         Device(
             system_title=st1,
             logical_device_name="VLT677015871E",
-            network_credentials=[
-                Credential(
-                    type="EapPsk",
-                    key_bytes=_key(st1, "EapPsk"),
-                    generated_at=_GENERATED_AT,
+            credential_groups=[
+                CredentialGroup(
+                    credentials=[
+                        Credential(
+                            type="EapPsk",
+                            key_bytes=_key(st1, "EapPsk"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                    ],
                 ),
-            ],
-            key_sets=[
-                DlmsKeySet(
+                CredentialGroup(
                     security_suite=0,
                     client_id=1,
                     name="management",
@@ -64,7 +66,7 @@ def create_sample_shipment(
                         ),
                     ],
                 ),
-                DlmsKeySet(
+                CredentialGroup(
                     security_suite=0,
                     client_id=2,
                     name="installer",
@@ -91,8 +93,8 @@ def create_sample_shipment(
         Device(
             system_title=st2,
             logical_device_name="AMP0099887766",
-            key_sets=[
-                DlmsKeySet(
+            credential_groups=[
+                CredentialGroup(
                     security_suite=0,
                     client_id=1,
                     name="management",
@@ -124,8 +126,8 @@ def create_sample_shipment(
         Device(
             system_title=st3,
             logical_device_name="OMS0012345678",
-            key_sets=[
-                DlmsKeySet(
+            credential_groups=[
+                CredentialGroup(
                     security_suite=0,
                     client_id=1,
                     name="management",
@@ -147,7 +149,7 @@ def create_sample_shipment(
                         ),
                     ],
                 ),
-                DlmsKeySet(
+                CredentialGroup(
                     security_suite=1,
                     client_id=1,
                     name="management",

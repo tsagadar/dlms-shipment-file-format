@@ -108,45 +108,63 @@
   </sch:pattern>
 
   <!-- ================================================================== -->
-  <!-- 5. Credential placement: NetworkCredentials                        -->
+  <!-- 5. CredentialGroup scope integrity                                 -->
   <!-- ================================================================== -->
   <!--
-    NetworkCredentials holds suite-independent network-layer secrets.
-    In v1 the only valid type is EapPsk (G3-PLC PSK) or Other (for
-    non-standard network secrets).  DLMS application-layer key types
-    (MasterKey, GlobalUnicastEncryption, GlobalAuthentication) must not
-    appear here.
+    securitySuite and clientId are always paired: both present (suite-
+    scoped group) or both absent (suite-independent group).  A group with
+    only one of the two attributes is malformed.
   -->
-  <sch:pattern id="network-credential-types">
-    <sch:rule context="tns:NetworkCredentials/tns:Credential">
-      <sch:assert test="@type = 'EapPsk' or @type = 'Other'">
-        NetworkCredentials may only contain credentials of type EapPsk
-        or Other.  Found type "<sch:value-of select="@type"/>".
-        DLMS application-layer keys belong in DlmsKeySet.
+  <sch:pattern id="credentialgroup-scope-integrity">
+    <sch:rule context="tns:CredentialGroup">
+      <sch:assert test="(@securitySuite and @clientId) or (not(@securitySuite) and not(@clientId))">
+        CredentialGroup must have both securitySuite and clientId
+        (suite-scoped group) or neither (suite-independent group).
+        Having only one of the two attributes is not allowed.
       </sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <!-- ================================================================== -->
-  <!-- 6. Credential placement: DlmsKeySet                               -->
+  <!-- 6. Credential placement: suite-scoped groups                       -->
   <!-- ================================================================== -->
   <!--
-    DlmsKeySet holds suite-scoped DLMS application-layer keys.  EapPsk
-    is a network-layer secret that has no relationship to the DLMS
-    security suite and must not appear here.
+    A suite-scoped CredentialGroup (securitySuite present) holds DLMS
+    application-layer keys.  EapPsk is a network-layer secret with no
+    relationship to the DLMS security suite and must not appear here.
   -->
-  <sch:pattern id="dlms-keyset-credential-types">
-    <sch:rule context="tns:DlmsKeySet/tns:Credential">
+  <sch:pattern id="suite-scoped-credential-types">
+    <sch:rule context="tns:CredentialGroup[@securitySuite]/tns:Credential">
       <sch:assert test="@type != 'EapPsk'">
-        DlmsKeySet must not contain EapPsk credentials.  EapPsk is a
-        suite-independent network secret and belongs in
-        NetworkCredentials.
+        A suite-scoped CredentialGroup must not contain EapPsk
+        credentials.  EapPsk is a suite-independent network secret and
+        belongs in a CredentialGroup without securitySuite/clientId.
       </sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <!-- ================================================================== -->
-  <!-- 7. Signature reference covers the whole document (advisory)        -->
+  <!-- 7. Credential placement: suite-independent groups                  -->
+  <!-- ================================================================== -->
+  <!--
+    A suite-independent CredentialGroup (no securitySuite) holds network-
+    layer secrets.  In v1 the only valid types are EapPsk and Other.
+    DLMS application-layer key types must not appear here.
+  -->
+  <sch:pattern id="suite-independent-credential-types">
+    <sch:rule context="tns:CredentialGroup[not(@securitySuite)]/tns:Credential">
+      <sch:assert test="@type = 'EapPsk' or @type = 'Other'">
+        A suite-independent CredentialGroup may only contain credentials
+        of type EapPsk or Other.  Found type
+        "<sch:value-of select="@type"/>".  DLMS application-layer keys
+        belong in a suite-scoped CredentialGroup (with securitySuite +
+        clientId).
+      </sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <!-- ================================================================== -->
+  <!-- 8. Signature reference covers the whole document (advisory)        -->
   <!-- ================================================================== -->
   <!--
     An enveloped XML signature must sign the entire ShipmentFile.  A

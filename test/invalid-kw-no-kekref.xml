@@ -25,13 +25,13 @@
   <Body>
     <Devices>
       <Device systemTitle="0102030405060708" logicalDeviceName="LD1">
-        <DlmsKeySet securitySuite="0" clientId="1">
+        <CredentialGroup securitySuite="0" clientId="1">
           <!-- kw-aes256-pad without KekRef — invalid -->
           <Credential type="GlobalUnicastEncryption">
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
           </Credential>
-        </DlmsKeySet>
+        </CredentialGroup>
       </Device>
     </Devices>
   </Body>
