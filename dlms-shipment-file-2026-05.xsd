@@ -80,7 +80,8 @@
     </xs:annotation>
 
     <!-- Referential integrity: every KekRef must resolve to a Kek/@id, and
-         every device system title is unique within the file. -->
+         every device system title and logical device name is unique within
+         the file. -->
     <xs:key name="KekIdKey">
       <xs:selector xpath="tns:Header/tns:Kek"/>
       <xs:field xpath="@id"/>
@@ -92,6 +93,10 @@
     <xs:unique name="DeviceSystemTitleUnique">
       <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
       <xs:field xpath="@systemTitle"/>
+    </xs:unique>
+    <xs:unique name="DeviceLogicalDeviceNameUnique">
+      <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
+      <xs:field xpath="@logicalDeviceName"/>
     </xs:unique>
   </xs:element>
 
@@ -322,9 +327,10 @@
   <xs:complexType name="DevicesType">
     <xs:sequence>
       <xs:element name="Device" type="tns:DeviceType" maxOccurs="unbounded">
-        <xs:unique name="LogicalDeviceNameUnique">
-          <xs:selector xpath="tns:LogicalDevice"/>
-          <xs:field xpath="@logicalDeviceName"/>
+        <xs:unique name="DlmsKeySetSuiteClientUnique">
+          <xs:selector xpath="tns:DlmsKeySet"/>
+          <xs:field xpath="@securitySuite"/>
+          <xs:field xpath="@clientId"/>
         </xs:unique>
       </xs:element>
     </xs:sequence>
@@ -333,10 +339,16 @@
   <xs:complexType name="DeviceType">
     <xs:annotation>
       <xs:documentation xml:lang="en">
-        A physical meter. Identified by its COSEM system title (the primary,
-        globally-unique key used for references). Optional manufacturing
-        metadata is present only in the shipment profile and is simply absent
-        in transfer files - the element shape does not change between profiles.
+        A meter. Identified by its COSEM system title (the primary,
+        globally-unique key used for references) and its COSEM logical device
+        name. DLMS application-layer keys are scoped directly here. Optional
+        manufacturing metadata is present only in the shipment profile and is
+        simply absent in transfer files - the element shape does not change
+        between profiles.
+
+        NetworkCredentials (e.g. the G3-PLC EAP-PSK) are suite-INDEPENDENT and
+        therefore sit as a sibling of the suite-scoped DlmsKeySet blocks, not
+        inside them. NetworkCredentials is optional - not every meter has a PSK.
 
         PARTIAL FAILURE: importers SHOULD reject a single malformed Device and
         continue importing the rest of the file.
@@ -353,13 +365,8 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="LogicalDevice" type="tns:LogicalDeviceType" maxOccurs="unbounded">
-        <xs:unique name="DlmsKeySetSuiteClientUnique">
-          <xs:selector xpath="tns:DlmsKeySet"/>
-          <xs:field xpath="@securitySuite"/>
-          <xs:field xpath="@clientId"/>
-        </xs:unique>
-      </xs:element>
+      <xs:element name="NetworkCredentials" type="tns:NetworkCredentialsType" minOccurs="0"/>
+      <xs:element name="DlmsKeySet" type="tns:DlmsKeySetType" maxOccurs="unbounded"/>
     </xs:sequence>
     <xs:attribute name="systemTitle" type="tns:SystemTitleType" use="required">
       <xs:annotation>
@@ -367,6 +374,14 @@
           COSEM system title: 8 octets, hex-encoded. First 3 octets are the
           FLAG manufacturer id, the remainder a manufacturer serial. Globally
           unique by construction; the primary device identity and reference key.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="logicalDeviceName" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation xml:lang="en">
+          COSEM logical device name (the secondary identity, complementing the
+          device system title). Unique within the file.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -387,31 +402,6 @@
       <xs:element name="ConfigurationHash" type="xs:string" minOccurs="0"/>
       <xs:element name="Extension" type="tns:ExtensionType" minOccurs="0"/>
     </xs:sequence>
-  </xs:complexType>
-
-  <xs:complexType name="LogicalDeviceType">
-    <xs:annotation>
-      <xs:documentation xml:lang="en">
-        A COSEM logical device hosted by the meter. DLMS application-layer keys
-        are scoped here. A meter exposes one or more logical devices.
-
-        NetworkCredentials (e.g. the G3-PLC EAP-PSK) are suite-INDEPENDENT and
-        therefore sit as a sibling of the suite-scoped DlmsKeySet blocks, not
-        inside them. NetworkCredentials is optional - not every meter has a PSK.
-      </xs:documentation>
-    </xs:annotation>
-    <xs:sequence>
-      <xs:element name="NetworkCredentials" type="tns:NetworkCredentialsType" minOccurs="0"/>
-      <xs:element name="DlmsKeySet" type="tns:DlmsKeySetType" maxOccurs="unbounded"/>
-    </xs:sequence>
-    <xs:attribute name="logicalDeviceName" type="xs:string" use="required">
-      <xs:annotation>
-        <xs:documentation xml:lang="en">
-          COSEM logical device name (the secondary identity, complementing the
-          device system title).
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
   </xs:complexType>
 
   <!-- = Network (suite-independent) credentials = -->

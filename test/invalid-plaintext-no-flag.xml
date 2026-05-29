@@ -24,16 +24,14 @@
   </Header>
   <Body>
     <Devices>
-      <Device systemTitle="0102030405060708">
-        <LogicalDevice logicalDeviceName="LD1">
-          <DlmsKeySet securitySuite="0" clientId="1">
-            <!-- Plaintext key without the file-level gate — invalid -->
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="https://open-metering.org/schemas/dlms-shipment-file/2026-05#none"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAA==</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
+      <Device systemTitle="0102030405060708" logicalDeviceName="LD1">
+        <DlmsKeySet securitySuite="0" clientId="1">
+          <!-- Plaintext key without the file-level gate — invalid -->
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="https://open-metering.org/schemas/dlms-shipment-file/2026-05#none"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAA==</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
       </Device>
     </Devices>
   </Body>

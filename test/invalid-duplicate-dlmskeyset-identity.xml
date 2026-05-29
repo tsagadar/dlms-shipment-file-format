@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
   INVALID: Two DlmsKeySet elements with the same (securitySuite, clientId)
-  pair inside one LogicalDevice.
+  pair inside one Device.
   Expected failure: XSD xs:unique DlmsKeySetSuiteClientUnique.
 -->
 <ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
@@ -23,24 +23,22 @@
   </Header>
   <Body>
     <Devices>
-      <Device systemTitle="0102030405060708">
-        <LogicalDevice logicalDeviceName="LD1">
-          <!-- Both key sets have securitySuite=0, clientId=1 — invalid -->
-          <DlmsKeySet securitySuite="0" clientId="1" name="first">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-          <DlmsKeySet securitySuite="0" clientId="1" name="duplicate">
-            <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
+      <Device systemTitle="0102030405060708" logicalDeviceName="LD1">
+        <!-- Both key sets have securitySuite=0, clientId=1 — invalid -->
+        <DlmsKeySet securitySuite="0" clientId="1" name="first">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
+        <DlmsKeySet securitySuite="0" clientId="1" name="duplicate">
+          <Credential type="GlobalAuthentication">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
       </Device>
     </Devices>
   </Body>

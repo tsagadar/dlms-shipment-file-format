@@ -1,8 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
-  INVALID: Two LogicalDevice elements with the same @logicalDeviceName
-  inside one Device.
-  Expected failure: XSD xs:unique LogicalDeviceNameUnique.
+  INVALID: Two Device elements with the same @logicalDeviceName.
+  Expected failure: XSD xs:unique DeviceLogicalDeviceNameUnique.
 -->
 <ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05"
               xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
@@ -23,26 +22,24 @@
   </Header>
   <Body>
     <Devices>
-      <Device systemTitle="0102030405060708">
-        <!-- Both logical devices share the same name — invalid -->
-        <LogicalDevice logicalDeviceName="SAMENAME">
-          <DlmsKeySet securitySuite="0" clientId="1">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
-        <LogicalDevice logicalDeviceName="SAMENAME">
-          <DlmsKeySet securitySuite="0" clientId="2">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
+      <!-- Both devices share the same logical device name — invalid -->
+      <Device systemTitle="0102030405060708" logicalDeviceName="SAMENAME">
+        <DlmsKeySet securitySuite="0" clientId="1">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
+      </Device>
+      <Device systemTitle="0807060504030201" logicalDeviceName="SAMENAME">
+        <DlmsKeySet securitySuite="0" clientId="1">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
       </Device>
     </Devices>
   </Body>

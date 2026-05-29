@@ -47,16 +47,11 @@ class DlmsKeySet:
 
 
 @dataclass
-class LogicalDevice:
+class Device:
+    system_title: str  # 16 uppercase hex chars, e.g. "414D50677015871E"
     logical_device_name: str
     key_sets: list[DlmsKeySet]
     network_credentials: list[Credential] = field(default_factory=list)
-
-
-@dataclass
-class Device:
-    system_title: str  # 16 uppercase hex chars, e.g. "414D50677015871E"
-    logical_devices: list[LogicalDevice]
 
 
 class ShipmentFileBuilder:
@@ -149,29 +144,25 @@ class ShipmentFileBuilder:
 
     def _build_device(self, parent: etree._Element, device: Device) -> None:
         device_el = etree.SubElement(
-            parent, f"{{{_NS}}}Device", systemTitle=device.system_title
-        )
-        for ld in device.logical_devices:
-            self._build_logical_device(device_el, ld)
-
-    def _build_logical_device(self, parent: etree._Element, ld: LogicalDevice) -> None:
-        ld_el = etree.SubElement(
-            parent, f"{{{_NS}}}LogicalDevice", logicalDeviceName=ld.logical_device_name
+            parent,
+            f"{{{_NS}}}Device",
+            systemTitle=device.system_title,
+            logicalDeviceName=device.logical_device_name,
         )
 
-        if ld.network_credentials:
-            net_creds_el = etree.SubElement(ld_el, f"{{{_NS}}}NetworkCredentials")
-            for cred in ld.network_credentials:
+        if device.network_credentials:
+            net_creds_el = etree.SubElement(device_el, f"{{{_NS}}}NetworkCredentials")
+            for cred in device.network_credentials:
                 self._build_credential(net_creds_el, cred)
 
-        for key_set in ld.key_sets:
+        for key_set in device.key_sets:
             ks_attribs = {
                 "securitySuite": str(key_set.security_suite),
                 "clientId": str(key_set.client_id),
             }
             if key_set.name:
                 ks_attribs["name"] = key_set.name
-            ks_el = etree.SubElement(ld_el, f"{{{_NS}}}DlmsKeySet", attrib=ks_attribs)
+            ks_el = etree.SubElement(device_el, f"{{{_NS}}}DlmsKeySet", attrib=ks_attribs)
             for cred in key_set.credentials:
                 self._build_credential(ks_el, cred)
 

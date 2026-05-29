@@ -85,22 +85,21 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │       └── xenc:CipherData    (RSA-OAEP-wrapped KEK)
 ├── Body
 │   └── Devices
-│       └── Device 1..N        (systemTitle = primary identity, uppercase hex)
+│       └── Device 1..N        (systemTitle + logicalDeviceName, both unique in file)
 │           ├── ManufacturingInfo   (optional; shipment profile)
-│           └── LogicalDevice 1..N  (logicalDeviceName, unique within Device)
-│               ├── NetworkCredentials  (optional; suite-independent)
-│               │   └── Credential type ∈ {EapPsk, Other}
-│               └── DlmsKeySet 1..N     (securitySuite, clientId, name)
-│                   │                   unique (securitySuite, clientId) per LogicalDevice
-│                   └── Credential type ∈ {MasterKey,
-│                                          GlobalUnicastEncryption,
-│                                          GlobalAuthentication,
-│                                          Other}
-│                       ├── EncryptionMethod (kw-aes256-pad | none)
-│                       ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
-│                       ├── xenc:CipherData  (AES-key-wrapped key)
-│                       ├── KeyCheckValue    (optional)
-│                       └── GeneratedAt       (optional)
+│           ├── NetworkCredentials  (optional; suite-independent)
+│           │   └── Credential type ∈ {EapPsk, Other}
+│           └── DlmsKeySet 1..N     (securitySuite, clientId, name)
+│               │                   unique (securitySuite, clientId) per Device
+│               └── Credential type ∈ {MasterKey,
+│                                      GlobalUnicastEncryption,
+│                                      GlobalAuthentication,
+│                                      Other}
+│                   ├── EncryptionMethod (kw-aes256-pad | none)
+│                   ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
+│                   ├── xenc:CipherData  (AES-key-wrapped key)
+│                   ├── KeyCheckValue    (optional)
+│                   └── GeneratedAt       (optional)
 └── ds:Signature        (optional, enveloped, covers whole document)
 ```
 
@@ -176,10 +175,10 @@ logistics section. Uppercase is mandatory so that string-equality comparisons
 (schema uniqueness checks, importer duplicate detection) are unambiguous.
 Importers SHOULD normalize incoming titles to uppercase before comparison.
 
-The **logical device name** identifies each COSEM logical device within the
-meter. Logical device names are unique within their parent `Device` (enforced
-by schema). Keys are scoped to a logical device, so the nesting is
-`Device → LogicalDevice → keys`.
+The **logical device name** is a secondary identity carried alongside the
+system title on the same `Device`. Both `systemTitle` and `logicalDeviceName`
+are required attributes and are unique within the file (enforced by schema).
+Keys (`NetworkCredentials`, `DlmsKeySet`) are scoped directly to the `Device`.
 
 ### Suite-scoped keys vs suite-independent network secrets
 
@@ -206,7 +205,7 @@ optional `name` ("management", "installer") is descriptive only. This avoids the
 proprietary practice of mangling role names into key identifiers.
 
 The schema enforces uniqueness of `(securitySuite, clientId)` pairs within a
-logical device, so each key set has an unambiguous import target.
+device, so each key set has an unambiguous import target.
 
 ### Opinionated, minimal v1 vocabulary
 
@@ -289,10 +288,9 @@ Verifiers MUST:
 * Schema version is carried in the namespace URI **and** mirrored in
   `@schemaVersion`.
 * Referential integrity is enforced by the schema: every `KekRef/@kek` must
-  resolve to a `Kek/@id` (`xs:keyref`), device system titles are unique within
-  the file, logical device names are unique within a device, and
-  `(securitySuite, clientId)` pairs are unique within a logical device
-  (`xs:unique`).
+  resolve to a `Kek/@id` (`xs:keyref`), device system titles and logical device
+  names are unique within the file, and `(securitySuite, clientId)` pairs are
+  unique within a device (`xs:unique`).
 * Forward compatibility via `Extension` elements accepting `##other`
   namespaces with `processContents="lax"` — vendors extend without breaking
   validation.

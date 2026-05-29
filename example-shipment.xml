@@ -20,7 +20,7 @@
   <Body>
     <Devices>
 
-      <Device systemTitle="414D50677015871E">
+      <Device systemTitle="414D50677015871E" logicalDeviceName="AMP677015871E">
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
           <HardwareVersion>2.0.1</HardwareVersion>
@@ -29,138 +29,133 @@
           <ConfigurationHash>9225b35007b219b3985565b38e826c72</ConfigurationHash>
         </ManufacturingInfo>
 
-        <LogicalDevice logicalDeviceName="AMP677015871E">
+        <!-- Suite-independent network secret. Present because this is a G3 meter. -->
+        <NetworkCredentials>
+          <Credential type="EapPsk">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>oGsCZoleLImoXZSQKKljqNAcdP9avvyrfUUqjdQa8yE5FSa9OfxJPA==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>1a2b3c</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+        </NetworkCredentials>
 
-          <!-- Suite-independent network secret. Present because this is a G3 meter. -->
-          <NetworkCredentials>
-            <Credential type="EapPsk">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>oGsCZoleLImoXZSQKKljqNAcdP9avvyrfUUqjdQa8yE5FSa9OfxJPA==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>1a2b3c</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-          </NetworkCredentials>
+        <!-- Management access level, security suite 0. -->
+        <DlmsKeySet securitySuite="0" clientId="1" name="management">
+          <Credential type="MasterKey">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>xERKJIW3BvSD3FBeBTFOsJ0Vk3LZJBfV+AAXZFJ5B631Gc4/vlXhsw==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>4d5e6f</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>ZoovMpzWmXWTP3QFDP6pcJzDXkG82oNoSPNRVSge59VLa9X/6YVIuQ==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>708192</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalAuthentication">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>esNPRu2lT7+EANlEmqqeWWA0Wrmw2mKm0ecKi9qpu9r3hexy3rk9sQ==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>a3b4c5</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+        </DlmsKeySet>
 
-          <!-- Management access level, security suite 0. -->
-          <DlmsKeySet securitySuite="0" clientId="1" name="management">
-            <Credential type="MasterKey">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>xERKJIW3BvSD3FBeBTFOsJ0Vk3LZJBfV+AAXZFJ5B631Gc4/vlXhsw==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>4d5e6f</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>ZoovMpzWmXWTP3QFDP6pcJzDXkG82oNoSPNRVSge59VLa9X/6YVIuQ==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>708192</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>esNPRu2lT7+EANlEmqqeWWA0Wrmw2mKm0ecKi9qpu9r3hexy3rk9sQ==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>a3b4c5</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-          </DlmsKeySet>
+        <!-- Same access level provisioned for suite 2 (ECC) as well. -->
+        <DlmsKeySet securitySuite="2" clientId="1" name="management">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>GTfW6nafBrBsdfSYrP9NnWg9pAvgzGwrBeb6apQR+Nw0lbnEClBuVg==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>d6e7f8</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalAuthentication">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>lO6yRkaAFi5/UsvYC1qv/jmnyklF0pY3o4hMTuZak+jbyPqmS5j5MA==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>091a2b</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+        </DlmsKeySet>
 
-          <!-- Same access level provisioned for suite 2 (ECC) as well. -->
-          <DlmsKeySet securitySuite="2" clientId="1" name="management">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>GTfW6nafBrBsdfSYrP9NnWg9pAvgzGwrBeb6apQR+Nw0lbnEClBuVg==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>d6e7f8</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>lO6yRkaAFi5/UsvYC1qv/jmnyklF0pY3o4hMTuZak+jbyPqmS5j5MA==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>091a2b</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-          </DlmsKeySet>
+        <!-- Installer access level, suite 0. -->
+        <DlmsKeySet securitySuite="0" clientId="2" name="installer">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>Pj8/KN9cgbQcSIFrSfITnbRSU3EKAkd7duPspaLojmaksSgyFDWj4w==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>3c4d5e</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalAuthentication">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>AG56HEg4arF/HWZdPdiuDz+gy5ygQoEvHuS8BRew+RvkMcWxOpiPJA==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>6f7081</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+        </DlmsKeySet>
 
-          <!-- Installer access level, suite 0. -->
-          <DlmsKeySet securitySuite="0" clientId="2" name="installer">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>Pj8/KN9cgbQcSIFrSfITnbRSU3EKAkd7duPspaLojmaksSgyFDWj4w==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>3c4d5e</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>AG56HEg4arF/HWZdPdiuDz+gy5ygQoEvHuS8BRew+RvkMcWxOpiPJA==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>6f7081</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-          </DlmsKeySet>
-
-        </LogicalDevice>
       </Device>
 
       <!-- Second device in the batch. Non-G3 bearer => no NetworkCredentials. -->
-      <Device systemTitle="414D500099887766">
+      <Device systemTitle="414D500099887766" logicalDeviceName="AMP0099887766">
         <ManufacturingInfo>
           <DeviceTypeDesignation>F2-TD-I30A2R2C2D2</DeviceTypeDesignation>
           <HardwareVersion>2.0.1</HardwareVersion>
           <FirmwareVersion>V010206</FirmwareVersion>
           <ManufacturingDate>2026-01-27</ManufacturingDate>
         </ManufacturingInfo>
-        <LogicalDevice logicalDeviceName="AMP0099887766">
-          <DlmsKeySet securitySuite="0" clientId="1" name="management">
-            <Credential type="MasterKey">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>8CuU4f62QwirEZ3o+Pp20EFw+ea+6XJK6Z1Mv4iaWYRO95co8a4dOQ==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>92a3b4</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>/3BBGjJLwkK/D1JM+1yq8EyFIV1jH4nSZ9r169oFhaIEdltNnSr7Tw==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>c5d6e7</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-            <Credential type="GlobalAuthentication">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData>
-                <xenc:CipherValue>AVsJ3qLFesWxB6iRCrtn5CwF6+iMAf3EkJXQiHVPwa7DvQRIVOkMvQ==</xenc:CipherValue>
-              </xenc:CipherData>
-              <KeyCheckValue>f80192</KeyCheckValue>
-              <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
+        <DlmsKeySet securitySuite="0" clientId="1" name="management">
+          <Credential type="MasterKey">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>8CuU4f62QwirEZ3o+Pp20EFw+ea+6XJK6Z1Mv4iaWYRO95co8a4dOQ==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>92a3b4</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>/3BBGjJLwkK/D1JM+1yq8EyFIV1jH4nSZ9r169oFhaIEdltNnSr7Tw==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>c5d6e7</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+          <Credential type="GlobalAuthentication">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData>
+              <xenc:CipherValue>AVsJ3qLFesWxB6iRCrtn5CwF6+iMAf3EkJXQiHVPwa7DvQRIVOkMvQ==</xenc:CipherValue>
+            </xenc:CipherData>
+            <KeyCheckValue>f80192</KeyCheckValue>
+            <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
+          </Credential>
+        </DlmsKeySet>
       </Device>
 
     </Devices>

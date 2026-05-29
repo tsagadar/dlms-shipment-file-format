@@ -23,16 +23,14 @@
   <Body>
     <Devices>
       <!-- System title contains lowercase hex — invalid -->
-      <Device systemTitle="4d4143677015871e">
-        <LogicalDevice logicalDeviceName="LD1">
-          <DlmsKeySet securitySuite="0" clientId="1">
-            <Credential type="GlobalUnicastEncryption">
-              <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
-              <KekRef kek="kek-1"/>
-              <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
-            </Credential>
-          </DlmsKeySet>
-        </LogicalDevice>
+      <Device systemTitle="4d4143677015871e" logicalDeviceName="LD1">
+        <DlmsKeySet securitySuite="0" clientId="1">
+          <Credential type="GlobalUnicastEncryption">
+            <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
+            <KekRef kek="kek-1"/>
+            <xenc:CipherData><xenc:CipherValue>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</xenc:CipherValue></xenc:CipherData>
+          </Credential>
+        </DlmsKeySet>
       </Device>
     </Devices>
   </Body>

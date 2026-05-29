@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from shipment import Credential, Device, DlmsKeySet, LogicalDevice, ShipmentFileBuilder
+from shipment import Credential, Device, DlmsKeySet, ShipmentFileBuilder
 
 _GENERATED_AT = datetime(2026, 1, 27, 22, 43, 0, tzinfo=UTC)
 
@@ -33,55 +33,51 @@ def create_sample_shipment(
     builder.add_device(
         Device(
             system_title=st1,
-            logical_devices=[
-                LogicalDevice(
-                    logical_device_name="VLT677015871E",
-                    network_credentials=[
+            logical_device_name="VLT677015871E",
+            network_credentials=[
+                Credential(
+                    type="EapPsk",
+                    key_bytes=_key(st1, "EapPsk"),
+                    generated_at=_GENERATED_AT,
+                ),
+            ],
+            key_sets=[
+                DlmsKeySet(
+                    security_suite=0,
+                    client_id=1,
+                    name="management",
+                    credentials=[
                         Credential(
-                            type="EapPsk",
-                            key_bytes=_key(st1, "EapPsk"),
+                            type="MasterKey",
+                            key_bytes=_key(st1, "MasterKey"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalUnicastEncryption",
+                            key_bytes=_key(st1, "GUEK"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalAuthentication",
+                            key_bytes=_key(st1, "GAK"),
                             generated_at=_GENERATED_AT,
                         ),
                     ],
-                    key_sets=[
-                        DlmsKeySet(
-                            security_suite=0,
-                            client_id=1,
-                            name="management",
-                            credentials=[
-                                Credential(
-                                    type="MasterKey",
-                                    key_bytes=_key(st1, "MasterKey"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalUnicastEncryption",
-                                    key_bytes=_key(st1, "GUEK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalAuthentication",
-                                    key_bytes=_key(st1, "GAK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                            ],
+                ),
+                DlmsKeySet(
+                    security_suite=0,
+                    client_id=2,
+                    name="installer",
+                    credentials=[
+                        Credential(
+                            type="GlobalUnicastEncryption",
+                            key_bytes=_key(st1, "GUEK-installer"),
+                            generated_at=_GENERATED_AT,
                         ),
-                        DlmsKeySet(
-                            security_suite=0,
-                            client_id=2,
-                            name="installer",
-                            credentials=[
-                                Credential(
-                                    type="GlobalUnicastEncryption",
-                                    key_bytes=_key(st1, "GUEK-installer"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalAuthentication",
-                                    key_bytes=_key(st1, "GAK-installer"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                            ],
+                        Credential(
+                            type="GlobalAuthentication",
+                            key_bytes=_key(st1, "GAK-installer"),
+                            generated_at=_GENERATED_AT,
                         ),
                     ],
                 ),
@@ -94,31 +90,27 @@ def create_sample_shipment(
     builder.add_device(
         Device(
             system_title=st2,
-            logical_devices=[
-                LogicalDevice(
-                    logical_device_name="AMP0099887766",
-                    key_sets=[
-                        DlmsKeySet(
-                            security_suite=0,
-                            client_id=1,
-                            name="management",
-                            credentials=[
-                                Credential(
-                                    type="MasterKey",
-                                    key_bytes=_key(st2, "MasterKey"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalUnicastEncryption",
-                                    key_bytes=_key(st2, "GUEK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalAuthentication",
-                                    key_bytes=_key(st2, "GAK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                            ],
+            logical_device_name="AMP0099887766",
+            key_sets=[
+                DlmsKeySet(
+                    security_suite=0,
+                    client_id=1,
+                    name="management",
+                    credentials=[
+                        Credential(
+                            type="MasterKey",
+                            key_bytes=_key(st2, "MasterKey"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalUnicastEncryption",
+                            key_bytes=_key(st2, "GUEK"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalAuthentication",
+                            key_bytes=_key(st2, "GAK"),
+                            generated_at=_GENERATED_AT,
                         ),
                     ],
                 ),
@@ -131,53 +123,49 @@ def create_sample_shipment(
     builder.add_device(
         Device(
             system_title=st3,
-            logical_devices=[
-                LogicalDevice(
-                    logical_device_name="OMS0012345678",
-                    key_sets=[
-                        DlmsKeySet(
-                            security_suite=0,
-                            client_id=1,
-                            name="management",
-                            credentials=[
-                                Credential(
-                                    type="MasterKey",
-                                    key_bytes=_key(st3, "MasterKey"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalUnicastEncryption",
-                                    key_bytes=_key(st3, "GUEK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalAuthentication",
-                                    key_bytes=_key(st3, "GAK"),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                            ],
+            logical_device_name="OMS0012345678",
+            key_sets=[
+                DlmsKeySet(
+                    security_suite=0,
+                    client_id=1,
+                    name="management",
+                    credentials=[
+                        Credential(
+                            type="MasterKey",
+                            key_bytes=_key(st3, "MasterKey"),
+                            generated_at=_GENERATED_AT,
                         ),
-                        DlmsKeySet(
-                            security_suite=1,
-                            client_id=1,
-                            name="management",
-                            credentials=[
-                                Credential(
-                                    type="MasterKey",
-                                    key_bytes=_key(st3, "MasterKey-s1", 32),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalUnicastEncryption",
-                                    key_bytes=_key(st3, "GUEK-s1", 32),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                                Credential(
-                                    type="GlobalAuthentication",
-                                    key_bytes=_key(st3, "GAK-s1", 32),
-                                    generated_at=_GENERATED_AT,
-                                ),
-                            ],
+                        Credential(
+                            type="GlobalUnicastEncryption",
+                            key_bytes=_key(st3, "GUEK"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalAuthentication",
+                            key_bytes=_key(st3, "GAK"),
+                            generated_at=_GENERATED_AT,
+                        ),
+                    ],
+                ),
+                DlmsKeySet(
+                    security_suite=1,
+                    client_id=1,
+                    name="management",
+                    credentials=[
+                        Credential(
+                            type="MasterKey",
+                            key_bytes=_key(st3, "MasterKey-s1", 32),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalUnicastEncryption",
+                            key_bytes=_key(st3, "GUEK-s1", 32),
+                            generated_at=_GENERATED_AT,
+                        ),
+                        Credential(
+                            type="GlobalAuthentication",
+                            key_bytes=_key(st3, "GAK-s1", 32),
+                            generated_at=_GENERATED_AT,
                         ),
                     ],
                 ),
