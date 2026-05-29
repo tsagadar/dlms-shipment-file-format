@@ -20,8 +20,13 @@ jobs:
       # ------------------------------------------------------------------ #
       # XSD: positive example must validate                                 #
       # ------------------------------------------------------------------ #
-      - name: XSD — positive example validates
-        run: xmllint --schema dlms-shipment-file-2026-05.xsd example-shipment.xml --noout
+      - name: XSD — positive examples validate
+        run: |
+          for f in example-transfer.xml example-transfer-signed.xml \
+                   example-shipment.xml example-shipment-signed.xml; do
+            echo "validating $f"
+            xmllint --schema dlms-shipment-file-2026-05.xsd "$f" --noout
+          done
 
       # ------------------------------------------------------------------ #
       # XSD: negative cases must be rejected by the schema                 #
@@ -57,15 +62,22 @@ jobs:
       # ------------------------------------------------------------------ #
       # Schematron: positive example must pass                              #
       # ------------------------------------------------------------------ #
-      - name: Schematron — positive example passes
+      - name: Schematron — positive examples pass
         run: |
           python3 - <<'EOF'
           from lxml import etree, isoschematron
           sch = isoschematron.Schematron(etree.parse("dlms-shipment.sch"), store_report=True)
-          doc = etree.parse("example-shipment.xml")
-          if not sch.validate(doc):
-              print(etree.tostring(sch.validation_report, pretty_print=True).decode())
-              raise SystemExit("Schematron validation failed on positive example")
+          examples = [
+              "example-transfer.xml",
+              "example-transfer-signed.xml",
+              "example-shipment.xml",
+              "example-shipment-signed.xml",
+          ]
+          for path in examples:
+              if not sch.validate(etree.parse(path)):
+                  print(etree.tostring(sch.validation_report, pretty_print=True).decode())
+                  raise SystemExit(f"Schematron validation failed on {path}")
+          print(f"All {len(examples)} positive examples passed Schematron.")
           EOF
 
       # ------------------------------------------------------------------ #

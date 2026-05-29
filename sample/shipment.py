@@ -3,8 +3,8 @@ from __future__ import annotations
 import base64
 import hashlib
 import os
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, field
+from datetime import UTC, date, datetime
 from io import BytesIO
 from typing import Literal
 from uuid import uuid4
@@ -44,6 +44,18 @@ class CredentialGroup:
     security_suite: int | None = None  # present for suite-scoped groups (0, 1, or 2)
     client_id: int | None = None       # present for suite-scoped groups (0–127)
     name: str | None = None
+    comment: str | None = None         # emitted as an XML comment before the group
+
+
+@dataclass
+class ManufacturingInfo:
+    """Optional per-device manufacturing metadata; shipment profile only."""
+
+    device_type_designation: str | None = None
+    hardware_version: str | None = None
+    firmware_versions: list[str] = field(default_factory=list)
+    manufacturing_date: date | None = None
+    configuration_hash: str | None = None
 
 
 @dataclass
@@ -51,20 +63,28 @@ class Device:
     system_title: str  # 16 uppercase hex chars, e.g. "414D50677015871E"
     logical_device_name: str
     credential_groups: list[CredentialGroup]
+    manufacturing_info: ManufacturingInfo | None = None
+    comment: str | None = None  # emitted as an XML comment before the device
 
 
 class ShipmentFileBuilder:
     def __init__(
         self,
         recipient_public_key: RSAPublicKey,
+        profile: Literal["transfer", "shipment"] = "shipment",
         producer_customer: str | None = None,
         producer_manufacturer: str | None = None,
+        producer_system: str | None = None,
         signing_private_key: RSAPrivateKey | None = None,
+        kek_comment: str | None = None,
     ) -> None:
         self._recipient_public_key = recipient_public_key
+        self._profile = profile
         self._producer_customer = producer_customer
         self._producer_manufacturer = producer_manufacturer
+        self._producer_system = producer_system
         self._signing_key = signing_private_key
+        self._kek_comment = kek_comment
         self._devices: list[Device] = []
         self._kek: bytes = b""  # populated during build()
         self._kek_id = "kek-1"
@@ -83,7 +103,7 @@ class ShipmentFileBuilder:
             root.set("id", str(uuid4()))
             root.set("createdAt", datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
             root.set("schemaVersion", "2026-05")
-            root.set("profile", "shipment")
+            root.set("profile", self._profile)
 
             self._build_header(root)
             self._build_body(root)
@@ -108,7 +128,11 @@ class ShipmentFileBuilder:
             attribs["customer"] = self._producer_customer
         if self._producer_manufacturer:
             attribs["manufacturer"] = self._producer_manufacturer
+        if self._producer_system:
+            attribs["system"] = self._producer_system
         etree.SubElement(header, f"{{{_NS}}}Producer", attrib=attribs)
+
+        _comment(header, self._kek_comment)
 
         # SubjectKeyIdentifier: SHA-1 of the PKCS#1 DER public key bytes (RFC 5280 method 1)
         pub_der = self._recipient_public_key.public_bytes(
@@ -139,6 +163,7 @@ class ShipmentFileBuilder:
         body = etree.SubElement(parent, f"{{{_NS}}}Body")
         devices_el = etree.SubElement(body, f"{{{_NS}}}Devices")
         for device in self._devices:
+            _comment(devices_el, device.comment)
             self._build_device(devices_el, device)
 
     def _build_device(self, parent: etree._Element, device: Device) -> None:
@@ -149,7 +174,11 @@ class ShipmentFileBuilder:
             logicalDeviceName=device.logical_device_name,
         )
 
+        if device.manufacturing_info is not None:
+            self._build_manufacturing_info(device_el, device.manufacturing_info)
+
         for group in device.credential_groups:
+            _comment(device_el, group.comment)
             attribs: dict[str, str] = {}
             if group.security_suite is not None:
                 attribs["securitySuite"] = str(group.security_suite)
@@ -160,6 +189,26 @@ class ShipmentFileBuilder:
             group_el = etree.SubElement(device_el, f"{{{_NS}}}CredentialGroup", attrib=attribs)
             for cred in group.credentials:
                 self._build_credential(group_el, cred)
+
+    def _build_manufacturing_info(
+        self, parent: etree._Element, info: ManufacturingInfo
+    ) -> None:
+        el = etree.SubElement(parent, f"{{{_NS}}}ManufacturingInfo")
+        # Element order follows the XSD sequence in ManufacturingInfoType.
+        if info.device_type_designation:
+            etree.SubElement(el, f"{{{_NS}}}DeviceTypeDesignation").text = (
+                info.device_type_designation
+            )
+        if info.hardware_version:
+            etree.SubElement(el, f"{{{_NS}}}HardwareVersion").text = info.hardware_version
+        for firmware_version in info.firmware_versions:
+            etree.SubElement(el, f"{{{_NS}}}FirmwareVersion").text = firmware_version
+        if info.manufacturing_date:
+            etree.SubElement(el, f"{{{_NS}}}ManufacturingDate").text = (
+                info.manufacturing_date.isoformat()
+            )
+        if info.configuration_hash:
+            etree.SubElement(el, f"{{{_NS}}}ConfigurationHash").text = info.configuration_hash
 
     def _build_credential(self, parent: etree._Element, cred: Credential) -> None:
         cred_attribs: dict[str, str] = {"type": cred.type}
@@ -209,6 +258,11 @@ class ShipmentFileBuilder:
         )
         sv_el = etree.SubElement(sig_el, f"{{{_NS_DS}}}SignatureValue")
         sv_el.text = base64.b64encode(sig_bytes).decode()
+
+
+def _comment(parent: etree._Element, text: str | None) -> None:
+    if text:
+        parent.append(etree.Comment(f" {text} "))
 
 
 def _c14n(element: etree._Element) -> bytes:

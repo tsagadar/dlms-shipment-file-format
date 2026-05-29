@@ -1,67 +1,92 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Literal
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from shipment import Credential, CredentialGroup, Device, ShipmentFileBuilder
+from shipment import (
+    Credential,
+    CredentialGroup,
+    Device,
+    ManufacturingInfo,
+    ShipmentFileBuilder,
+)
 
 _GENERATED_AT = datetime(2026, 1, 27, 22, 43, 0, tzinfo=UTC)
+_REPO_ROOT = Path(__file__).parent.parent
+
+_ST1 = "414D50677015871E"  # G3-PLC meter
+_ST2 = "414D500099887766"  # non-G3 meter
+
+_KEK_COMMENT = "Single recipient => exactly one KEK, RSA-OAEP wrapped to the recipient's key."
 
 
 def _key(system_title: str, purpose: str, length: int = 16) -> bytes:
     return hashlib.sha256(f"{system_title}/{purpose}".encode()).digest()[:length]
 
 
-def create_sample_shipment(
-    recipient_public_key: RSAPublicKey,
-    signing_private_key: RSAPrivateKey | None = None,
-) -> bytes:
-    builder = ShipmentFileBuilder(
-        recipient_public_key=recipient_public_key,
-        producer_customer="ACME Utility",
-        producer_manufacturer="SmartMeter Inc",
-        signing_private_key=signing_private_key,
-    )
+def _devices(include_manufacturing: bool) -> list[Device]:
+    """The canonical two-device set, shared by both profiles.
 
-    # Device 1 — VLT: G3-PLC meter with management and installer access levels
-    st1 = "564C54677015871E"
-    builder.add_device(
+    Identities and keys are identical across profiles; the only difference is
+    that the shipment profile attaches ManufacturingInfo, illustrating that a
+    transfer file is a strict subset of a shipment file.
+    """
+    return [
         Device(
-            system_title=st1,
-            logical_device_name="VLT677015871E",
+            system_title=_ST1,
+            logical_device_name="AMP677015871E",
+            comment="First device: G3-PLC meter, management + installer access.",
+            manufacturing_info=ManufacturingInfo(
+                device_type_designation="F2-TD-I30A2R2C2D2",
+                hardware_version="2.0.1",
+                firmware_versions=["V010206"],
+                manufacturing_date=date(2026, 1, 27),
+                configuration_hash="9225b35007b219b3985565b38e826c72",
+            )
+            if include_manufacturing
+            else None,
             credential_groups=[
                 CredentialGroup(
+                    comment="Suite-independent group: G3 network secret, no securitySuite/clientId.",
                     credentials=[
-                        Credential(
-                            type="EapPsk",
-                            key_bytes=_key(st1, "EapPsk"),
-                            generated_at=_GENERATED_AT,
-                        ),
+                        Credential("EapPsk", _key(_ST1, "EapPsk"), generated_at=_GENERATED_AT),
                     ],
                 ),
                 CredentialGroup(
                     security_suite=0,
                     client_id=1,
                     name="management",
+                    comment="Management access level, security suite 0.",
+                    credentials=[
+                        Credential("MasterKey", _key(_ST1, "MasterKey"), generated_at=_GENERATED_AT),
+                        Credential(
+                            "GlobalUnicastEncryption", _key(_ST1, "GUEK"), generated_at=_GENERATED_AT
+                        ),
+                        Credential(
+                            "GlobalAuthentication", _key(_ST1, "GAK"), generated_at=_GENERATED_AT
+                        ),
+                    ],
+                ),
+                CredentialGroup(
+                    security_suite=2,
+                    client_id=1,
+                    name="management",
+                    comment="Same access level provisioned for suite 2 (ECC) as well.",
                     credentials=[
                         Credential(
-                            type="MasterKey",
-                            key_bytes=_key(st1, "MasterKey"),
+                            "GlobalUnicastEncryption",
+                            _key(_ST1, "GUEK-s2", 32),
                             generated_at=_GENERATED_AT,
                         ),
                         Credential(
-                            type="GlobalUnicastEncryption",
-                            key_bytes=_key(st1, "GUEK"),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalAuthentication",
-                            key_bytes=_key(st1, "GAK"),
+                            "GlobalAuthentication",
+                            _key(_ST1, "GAK-s2", 32),
                             generated_at=_GENERATED_AT,
                         ),
                     ],
@@ -70,137 +95,125 @@ def create_sample_shipment(
                     security_suite=0,
                     client_id=2,
                     name="installer",
+                    comment="Installer access level, suite 0.",
                     credentials=[
                         Credential(
-                            type="GlobalUnicastEncryption",
-                            key_bytes=_key(st1, "GUEK-installer"),
+                            "GlobalUnicastEncryption",
+                            _key(_ST1, "GUEK-installer"),
                             generated_at=_GENERATED_AT,
                         ),
                         Credential(
-                            type="GlobalAuthentication",
-                            key_bytes=_key(st1, "GAK-installer"),
+                            "GlobalAuthentication",
+                            _key(_ST1, "GAK-installer"),
                             generated_at=_GENERATED_AT,
                         ),
                     ],
                 ),
             ],
-        )
-    )
-
-    # Device 2 — AMP: basic meter, management access only
-    st2 = "414D500099887766"
-    builder.add_device(
+        ),
         Device(
-            system_title=st2,
+            system_title=_ST2,
             logical_device_name="AMP0099887766",
+            comment="Second device: non-G3 bearer, so no suite-independent group.",
+            manufacturing_info=ManufacturingInfo(
+                device_type_designation="F2-TD-I30A2R2C2D2",
+                hardware_version="2.0.1",
+                firmware_versions=["V010206"],
+                manufacturing_date=date(2026, 1, 27),
+            )
+            if include_manufacturing
+            else None,
             credential_groups=[
                 CredentialGroup(
                     security_suite=0,
                     client_id=1,
                     name="management",
                     credentials=[
+                        Credential("MasterKey", _key(_ST2, "MasterKey"), generated_at=_GENERATED_AT),
                         Credential(
-                            type="MasterKey",
-                            key_bytes=_key(st2, "MasterKey"),
-                            generated_at=_GENERATED_AT,
+                            "GlobalUnicastEncryption", _key(_ST2, "GUEK"), generated_at=_GENERATED_AT
                         ),
                         Credential(
-                            type="GlobalUnicastEncryption",
-                            key_bytes=_key(st2, "GUEK"),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalAuthentication",
-                            key_bytes=_key(st2, "GAK"),
-                            generated_at=_GENERATED_AT,
+                            "GlobalAuthentication", _key(_ST2, "GAK"), generated_at=_GENERATED_AT
                         ),
                     ],
                 ),
             ],
-        )
-    )
+        ),
+    ]
 
-    # Device 3 — OMS: dual-suite meter (suite 0 AES-128, suite 1 AES-256)
-    st3 = "4F4D530012345678"
-    builder.add_device(
-        Device(
-            system_title=st3,
-            logical_device_name="OMS0012345678",
-            credential_groups=[
-                CredentialGroup(
-                    security_suite=0,
-                    client_id=1,
-                    name="management",
-                    credentials=[
-                        Credential(
-                            type="MasterKey",
-                            key_bytes=_key(st3, "MasterKey"),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalUnicastEncryption",
-                            key_bytes=_key(st3, "GUEK"),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalAuthentication",
-                            key_bytes=_key(st3, "GAK"),
-                            generated_at=_GENERATED_AT,
-                        ),
-                    ],
-                ),
-                CredentialGroup(
-                    security_suite=1,
-                    client_id=1,
-                    name="management",
-                    credentials=[
-                        Credential(
-                            type="MasterKey",
-                            key_bytes=_key(st3, "MasterKey-s1", 32),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalUnicastEncryption",
-                            key_bytes=_key(st3, "GUEK-s1", 32),
-                            generated_at=_GENERATED_AT,
-                        ),
-                        Credential(
-                            type="GlobalAuthentication",
-                            key_bytes=_key(st3, "GAK-s1", 32),
-                            generated_at=_GENERATED_AT,
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )
 
+def build_example(
+    profile: Literal["transfer", "shipment"],
+    recipient_public_key: RSAPublicKey,
+    signing_private_key: RSAPrivateKey | None = None,
+) -> bytes:
+    """Build one example file for the given profile.
+
+    shipment: manufacturer delivery — Producer carries customer/manufacturer and
+              each Device carries ManufacturingInfo.
+    transfer: system-to-system export — Producer names the producing system and
+              no manufacturing metadata is present.
+    """
+    is_shipment = profile == "shipment"
+    builder = ShipmentFileBuilder(
+        recipient_public_key=recipient_public_key,
+        profile=profile,
+        producer_customer="VOLT" if is_shipment else None,
+        producer_manufacturer="AmpTech" if is_shipment else None,
+        producer_system=None if is_shipment else "VOLT-HES",
+        signing_private_key=signing_private_key,
+        kek_comment=_KEK_COMMENT,
+    )
+    for device in _devices(include_manufacturing=is_shipment):
+        builder.add_device(device)
     return builder.build()
+
+
+def _load_or_create_signing_key() -> RSAPrivateKey:
+    # Reuse the committed signing key so the committed signed examples verify
+    # against it; only generate (and write) one if it is missing.
+    path = _REPO_ROOT / "sample" / "signing-private-key.pem"
+    if path.exists():
+        key = serialization.load_pem_private_key(path.read_bytes(), password=None)
+        assert isinstance(key, RSAPrivateKey)
+        return key
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    path.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.TraditionalOpenSSL,
+            serialization.NoEncryption(),
+        )
+    )
+    return key
 
 
 def main() -> None:
     recipient_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    signing_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    xml_bytes = create_sample_shipment(recipient_key.public_key(), signing_key)
+    recipient_pub = recipient_key.public_key()
+    signing_key = _load_or_create_signing_key()
 
-    Path("shipment-sample.xml").write_bytes(xml_bytes)
-    Path("recipient-private-key.pem").write_bytes(
+    outputs = {
+        "example-transfer.xml": build_example("transfer", recipient_pub),
+        "example-transfer-signed.xml": build_example("transfer", recipient_pub, signing_key),
+        "example-shipment.xml": build_example("shipment", recipient_pub),
+        "example-shipment-signed.xml": build_example("shipment", recipient_pub, signing_key),
+    }
+    for name, xml_bytes in outputs.items():
+        (_REPO_ROOT / name).write_bytes(xml_bytes)
+        print(f"Written {name} ({len(xml_bytes)} bytes)")
+
+    # The recipient private key is needed to unwrap the KEK; write it next to the
+    # sample so a reader can decrypt the example credentials.
+    (_REPO_ROOT / "sample" / "recipient-private-key.pem").write_bytes(
         recipient_key.private_bytes(
             serialization.Encoding.PEM,
             serialization.PrivateFormat.TraditionalOpenSSL,
             serialization.NoEncryption(),
         )
     )
-    Path("signing-private-key.pem").write_bytes(
-        signing_key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            serialization.NoEncryption(),
-        )
-    )
-    print(f"Written shipment-sample.xml ({len(xml_bytes)} bytes)")
-    print("Written recipient-private-key.pem")
-    print("Written signing-private-key.pem")
+    print("Written sample/recipient-private-key.pem")
 
 
 if __name__ == "__main__":
