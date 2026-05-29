@@ -46,11 +46,11 @@ def _devices(include_manufacturing: bool) -> list[Device]:
             g3_plc_mac_address=_MAC1,
             comment="First device: G3-PLC meter, management + installer access.",
             manufacturing_info=ManufacturingInfo(
-                device_type_designation="F2-TD-I30A2R2C2D2",
-                hardware_version="2.0.1",
-                firmware_versions=["V010206"],
-                manufacturing_date=date(2026, 1, 27),
-                configuration_hash="9225b35007b219b3985565b38e826c72",
+                device_type_designation="EX-TD-M100A1B1C1",
+                hardware_version="1.0.0",
+                firmware_versions=["V000101"],
+                manufacturing_date=date(2025, 6, 1),
+                configuration_hash="c0ffeec0ffeec0ffeec0ffeec0ffeec0",
             )
             if include_manufacturing
             else None,
@@ -124,10 +124,10 @@ def _devices(include_manufacturing: bool) -> list[Device]:
             logical_device_name="AMP0099887766",
             comment="Second device: non-G3 bearer, so no suite-independent group.",
             manufacturing_info=ManufacturingInfo(
-                device_type_designation="F2-TD-I30A2R2C2D2",
-                hardware_version="2.0.1",
-                firmware_versions=["V010206"],
-                manufacturing_date=date(2026, 1, 27),
+                device_type_designation="EX-TD-M100A1B1C1",
+                hardware_version="1.0.0",
+                firmware_versions=["V000101"],
+                manufacturing_date=date(2025, 6, 1),
             )
             if include_manufacturing
             else None,
