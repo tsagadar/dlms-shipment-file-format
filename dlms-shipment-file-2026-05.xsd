@@ -90,10 +90,10 @@
       <xs:selector xpath=".//tns:KekRef"/>
       <xs:field xpath="@kek"/>
     </xs:keyref>
-    <xs:unique name="DeviceSystemTitleUnique">
+    <xs:key name="DeviceSystemTitleKey">
       <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
       <xs:field xpath="@systemTitle"/>
-    </xs:unique>
+    </xs:key>
     <xs:unique name="DeviceLogicalDeviceNameUnique">
       <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
       <xs:field xpath="tns:Identifiers/tns:LogicalDeviceName"/>
@@ -105,6 +105,11 @@
       <xs:selector xpath="tns:Body/tns:Devices/tns:Device"/>
       <xs:field xpath="tns:Identifiers/tns:G3PlcMacAddress"/>
     </xs:unique>
+    <!-- Every DeviceRef in Logistics must point to an existing Device. -->
+    <xs:keyref name="LogisticsDeviceRefKey" refer="tns:DeviceSystemTitleKey">
+      <xs:selector xpath="tns:Body/tns:Logistics/tns:Pallet/tns:Box/tns:DeviceRef"/>
+      <xs:field xpath="@systemTitle"/>
+    </xs:keyref>
   </xs:element>
 
   <xs:complexType name="ShipmentFileType">
@@ -328,6 +333,17 @@
   <xs:complexType name="BodyType">
     <xs:sequence>
       <xs:element name="Devices" type="tns:DevicesType"/>
+      <xs:element name="Logistics" type="tns:LogisticsType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            Physical packaging hierarchy: pallets containing boxes, each box
+            listing the meters it carries by system title. Optional; shipment
+            profile only. References devices declared in the sibling Devices
+            element by their systemTitle; referential integrity is enforced by
+            the LogisticsDeviceRefKey keyref.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
     </xs:sequence>
   </xs:complexType>
 
@@ -444,6 +460,43 @@
       <xs:element name="ConfigurationHash" type="xs:string" minOccurs="0"/>
       <xs:element name="Extension" type="tns:ExtensionType" minOccurs="0"/>
     </xs:sequence>
+  </xs:complexType>
+
+  <!-- = Logistics = -->
+
+  <xs:complexType name="LogisticsType">
+    <xs:annotation>
+      <xs:documentation xml:lang="en">
+        Physical packaging summary for the delivery. Delivery-level identifiers
+        (delivery note, purchase order, date) sit as attributes; the pallet/box
+        hierarchy unfolds as child elements. One Logistics block per file,
+        because a file maps to one delivery.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Pallet" type="tns:PalletType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="deliveryNote"  type="xs:string" use="optional"/>
+    <xs:attribute name="purchaseOrder" type="xs:string" use="optional"/>
+    <xs:attribute name="date"          type="xs:date"   use="optional"/>
+  </xs:complexType>
+
+  <xs:complexType name="PalletType">
+    <xs:sequence>
+      <xs:element name="Box" type="tns:BoxType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="BoxType">
+    <xs:sequence>
+      <xs:element name="DeviceRef" type="tns:DeviceRefType" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="DeviceRefType">
+    <xs:attribute name="systemTitle" type="tns:SystemTitleType" use="required"/>
   </xs:complexType>
 
   <!-- = Credential group = -->

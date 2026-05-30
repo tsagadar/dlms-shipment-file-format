@@ -73,6 +73,31 @@ class Device:
     comment: str | None = None  # emitted as an XML comment before the device
 
 
+@dataclass
+class DeviceRef:
+    system_title: str  # references Device/@systemTitle
+
+
+@dataclass
+class Box:
+    id: str
+    device_refs: list[DeviceRef]
+
+
+@dataclass
+class Pallet:
+    id: str
+    boxes: list[Box]
+
+
+@dataclass
+class Logistics:
+    pallets: list[Pallet]
+    delivery_note: str | None = None
+    purchase_order: str | None = None
+    date: date | None = None
+
+
 class ShipmentFileBuilder:
     def __init__(
         self,
@@ -92,11 +117,16 @@ class ShipmentFileBuilder:
         self._signing_key = signing_private_key
         self._kek_comment = kek_comment
         self._devices: list[Device] = []
+        self._logistics: Logistics | None = None
         self._kek: bytes = b""  # populated during build()
         self._kek_id = "kek-1"
 
     def add_device(self, device: Device) -> ShipmentFileBuilder:
         self._devices.append(device)
+        return self
+
+    def set_logistics(self, logistics: Logistics) -> ShipmentFileBuilder:
+        self._logistics = logistics
         return self
 
     def build(self) -> bytes:
@@ -171,6 +201,24 @@ class ShipmentFileBuilder:
         for device in self._devices:
             _comment(devices_el, device.comment)
             self._build_device(devices_el, device)
+        if self._logistics is not None:
+            self._build_logistics(body, self._logistics)
+
+    def _build_logistics(self, parent: etree._Element, logistics: Logistics) -> None:
+        attribs: dict[str, str] = {}
+        if logistics.delivery_note:
+            attribs["deliveryNote"] = logistics.delivery_note
+        if logistics.purchase_order:
+            attribs["purchaseOrder"] = logistics.purchase_order
+        if logistics.date:
+            attribs["date"] = logistics.date.isoformat()
+        logistics_el = etree.SubElement(parent, f"{{{_NS}}}Logistics", attrib=attribs)
+        for pallet in logistics.pallets:
+            pallet_el = etree.SubElement(logistics_el, f"{{{_NS}}}Pallet", id=pallet.id)
+            for box in pallet.boxes:
+                box_el = etree.SubElement(pallet_el, f"{{{_NS}}}Box", id=box.id)
+                for ref in box.device_refs:
+                    etree.SubElement(box_el, f"{{{_NS}}}DeviceRef", systemTitle=ref.system_title)
 
     def _build_device(self, parent: etree._Element, device: Device) -> None:
         device_el = etree.SubElement(

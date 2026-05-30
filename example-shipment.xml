@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" id="5c742702-7f2e-4a15-ace6-f539af608e70" createdAt="2026-05-29T18:13:10Z" schemaVersion="2026-05" profile="shipment">
+<ShipmentFile xmlns="https://open-metering.org/schemas/dlms-shipment-file/2026-05" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" id="c6940dcf-a8e5-45e2-8881-513b6d515f41" createdAt="2026-05-30T14:05:08Z" schemaVersion="2026-05" profile="shipment">
   <Header>
     <Producer customer="VOLT" manufacturer="AmpTech"/>
     <!-- Single recipient => exactly one KEK, RSA-OAEP wrapped to the recipient's key. -->
     <Kek id="kek-1">
       <EncryptionMethod algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"/>
       <RecipientKey>
-        <SubjectKeyIdentifier>LutelaOPOeuTdRvdwYkF3W0UApI=</SubjectKeyIdentifier>
+        <SubjectKeyIdentifier>w6uvrdlxMaULWKgd5YOyK6yNZ2Q=</SubjectKeyIdentifier>
       </RecipientKey>
       <xenc:CipherData>
-        <xenc:CipherValue>gm1t7Mg6xWqZm67oUaB1UBQ3q64Jn7zhEiUngbBt3bzsTkzE+MHtTH0a78hZXcMKl26aI+l/6PH7wyv+glGC8T5z4xoYn5CPdtmaJDU7oOIeb7NbY2Yy+hvngbuCaxsbCVY7FUSpPHWSpQYrR0NdqX3oyPZlpjH0y1fFsQWFxviOAdD5xzDCAwUKlt4qcB8rkVDiHMv6W1eDEcI5IR52wZm+T1fWMpEmUoLNZnujmk+Sa4RkMvNhSqBUS+q4MsrRzyCVd8pFPt6icoxbdjYxVU8qExJ8OBAVMigLAnpNPvPiYAc4L9+EpSQDcm5ufWAynix9fCkhUp30MnFXG4G6og==</xenc:CipherValue>
+        <xenc:CipherValue>k5jyZhVMrq4DDx9GTn6ejDJ7WhHzo7Ez5JT/jePDE3VnSfjmAA4WrYfC/c85sebWCNOzgxVPpt4f5mU2FRxDDakEeazjIFnya5ZnH+XMmw4RnC+E4PLsDoWLHjDScuZvkcdScpHV7aD7ivAf4EaWUuHGYiGESJqlHw02IWAtieF6c+9IcL9YOaKbugdpjEjp4nFsEeDOlhuZSBBFVEzTKqpGuwf04LepYGlTRVeUuQHOvDngjNeulruetOvF7oKk1yvk9ycWtnsmpELwRB8HZXLmUyo72fBR2zXVsCMwWczJVG/QTttresQhWuzPfmnKXv7bK5G6Ong8soYxAwwhkg==</xenc:CipherValue>
       </xenc:CipherData>
     </Kek>
   </Header>
@@ -34,7 +34,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>qXCgHIKXsw/DNl9cytmhjA3m67A8FKts</xenc:CipherValue>
+              <xenc:CipherValue>PpIuhWf4B/GQKzf+T4aAwU20doDlIOke</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -45,7 +45,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>Mjv+DR4DhkKkBSxEUrvnCPzKkrECaTWp</xenc:CipherValue>
+              <xenc:CipherValue>zVcf7jFmEe1MpXAESYN65DdhIzMZeDVb</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -53,7 +53,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>orrXoojyc8/fzYUbVXHXbdI6sC/F+pfm</xenc:CipherValue>
+              <xenc:CipherValue>n45zW0Hm7yijlmChG7xV5eHDjaL3isjr</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -61,7 +61,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>55kwGdK4BBlX2y4WRXkP4He1LAGxjDXh</xenc:CipherValue>
+              <xenc:CipherValue>mwyYZLXHjSpB/P4DWHsdlUSimDp4O95t</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -72,7 +72,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>78muWYWfJ1KkqibAef2Nd30+3jy5XCLVrY+ufzBb5fPbHrFoPHntlA==</xenc:CipherValue>
+              <xenc:CipherValue>7c+m2xwETJpwVbLvEr4vwb80jkpASiWH0uFfUbno2nbPMqVIzosUSQ==</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -80,7 +80,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>AKl/Q3fz8qKNL43KPTYtXY5wy0U82mzkIEzY+jxJgtN0E+miIF2qkA==</xenc:CipherValue>
+              <xenc:CipherValue>fHmbgfpIKO6Hom+UQM+o+XvKJzR5RUtmjfs1xawv+66cs5x3dmSyOQ==</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -91,7 +91,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>hiGydW2872KJulS//3NpPbAd4Al2+6sf</xenc:CipherValue>
+              <xenc:CipherValue>z95qQe2/OrAETO8ZAm2wlNcPIdVuyhun</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -99,7 +99,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>yBwqOXfyZlvX3XKmO1tQt+TV4ePzxCeL</xenc:CipherValue>
+              <xenc:CipherValue>IfarYvGpdpaZGyPpyWrDqnbyJ70zQi3o</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -107,7 +107,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>JUXtaIve/bcHF/jh2ELEE1EEntpUsrXz</xenc:CipherValue>
+              <xenc:CipherValue>PNgKFGWDCZ3Kav838pH0N1quioLGAd45</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -129,7 +129,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>6dLl0qOIhXTMZ5zfcXeNC4y1U5ZXmDhD</xenc:CipherValue>
+              <xenc:CipherValue>yfvQ8L/I0Bus8//bChRlx4EajIe3CwwF</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -137,7 +137,7 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>jNk/c+87DdAuFVn6Sva2vsPeSOmrzpN/</xenc:CipherValue>
+              <xenc:CipherValue>d8NKElrIzq/p3o1HD+KXVTpmSXjky5J3</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
@@ -145,12 +145,20 @@
             <EncryptionMethod algorithm="http://www.w3.org/2009/xmlenc11#kw-aes-256-pad"/>
             <KekRef kek="kek-1"/>
             <xenc:CipherData>
-              <xenc:CipherValue>oBs+sV2UuRBAFlSkhtk7RE5iw3kW2Do2</xenc:CipherValue>
+              <xenc:CipherValue>pegBO8DgBCB/2WvoGwVdgapQ8n9qobUT</xenc:CipherValue>
             </xenc:CipherData>
             <GeneratedAt>2026-01-27T22:43:00Z</GeneratedAt>
           </Credential>
         </CredentialGroup>
       </Device>
     </Devices>
+    <Logistics deliveryNote="DN-2025-001" purchaseOrder="PO-2025-001" date="2025-06-01">
+      <Pallet id="PAL-001">
+        <Box id="BOX-001">
+          <DeviceRef systemTitle="414D50677015871E"/>
+          <DeviceRef systemTitle="414D500099887766"/>
+        </Box>
+      </Pallet>
+    </Logistics>
   </Body>
 </ShipmentFile>

@@ -70,6 +70,17 @@ def test_transfer_omits_manufacturing_info(docs: dict[Profile, etree._Element]) 
     assert docs["transfer"].find(f".//{{{_NS}}}ManufacturingInfo") is None
 
 
+def test_shipment_has_logistics(docs: dict[Profile, etree._Element]) -> None:
+    logistics = docs["shipment"].find(f".//{{{_NS}}}Logistics")
+    assert logistics is not None
+    assert logistics.get("deliveryNote") is not None
+    assert len(logistics.findall(f".//{{{_NS}}}DeviceRef")) == 2
+
+
+def test_transfer_omits_logistics(docs: dict[Profile, etree._Element]) -> None:
+    assert docs["transfer"].find(f".//{{{_NS}}}Logistics") is None
+
+
 @pytest.mark.parametrize("profile", _PROFILES)
 def test_signature_valid(profile: Profile, signing_key: RSAPrivateKey) -> None:
     doc = _build(profile, signing_key)

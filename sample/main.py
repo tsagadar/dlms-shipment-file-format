@@ -10,10 +10,14 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 from shipment import (
+    Box,
     Credential,
     CredentialGroup,
     Device,
+    DeviceRef,
+    Logistics,
     ManufacturingInfo,
+    Pallet,
     ShipmentFileBuilder,
 )
 
@@ -175,6 +179,22 @@ def build_example(
     )
     for device in _devices(include_manufacturing=is_shipment):
         builder.add_device(device)
+    if is_shipment:
+        builder.set_logistics(
+            Logistics(
+                delivery_note="DN-2025-001",
+                purchase_order="PO-2025-001",
+                date=date(2025, 6, 1),
+                pallets=[
+                    Pallet(
+                        id="PAL-001",
+                        boxes=[
+                            Box(id="BOX-001", device_refs=[DeviceRef(_ST1), DeviceRef(_ST2)]),
+                        ],
+                    )
+                ],
+            )
+        )
     return builder.build()
 
 

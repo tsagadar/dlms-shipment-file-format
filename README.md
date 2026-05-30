@@ -68,10 +68,9 @@ This format is one container for both flows.
 * **Transfer (core).** Move keys from one system to another. Carries only what
   is needed: device identity + the keys.
 * **Shipment (superset).** A manufacturer delivers freshly built meters. Adds
-  optional per-device manufacturing metadata. (Packaging/order *logistics* will
-  arrive in a later revision as a separate top-level section that references
-  devices by system title — deliberately deferred so it can be bolted on
-  without disturbing the core.)
+  optional per-device manufacturing metadata and an optional `Logistics` section
+  that captures the physical packaging hierarchy (pallets → boxes → device
+  references by system title), kept separate from the device/credential data.
 
 The device element has the **same shape** in both profiles; shipment-only
 information is optional and simply absent in a transfer file. A consumer that
@@ -89,24 +88,28 @@ ShipmentFile            (id, createdAt, schemaVersion, allowPlaintextKeys, profi
 │       ├── RecipientKey       (X.509 cert / SKI / thumbprint — stable identity)
 │       └── xenc:CipherData    (RSA-OAEP-wrapped KEK)
 ├── Body
-│   └── Devices
-│       └── Device 1..N        (systemTitle — unique in file)
-│           ├── Identifiers
-│           │   ├── LogicalDeviceName   (unique in file)
-│           │   └── G3PlcMacAddress     (optional; G3-PLC EUI-64, unique in file)
-│           ├── ManufacturingInfo   (optional; shipment profile)
-│           └── CredentialGroup 1..N  (securitySuite?, clientId?, name?)
-│               │   suite-scoped group: securitySuite + clientId present
-│               │     unique (securitySuite, clientId) per Device
-│               │     Credential type ∈ {MasterKey, GlobalUnicastEncryption,
-│               │                        GlobalAuthentication, Secret, Other}
-│               │   suite-independent group: securitySuite + clientId absent
-│               │     Credential type ∈ {EapPsk, Other}
-│               └── Credential
-│                   ├── EncryptionMethod (kw-aes256-pad | none)
-│                   ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
-│                   ├── xenc:CipherData  (AES-key-wrapped key)
-│                   └── GeneratedAt      (optional)
+│   ├── Devices
+│   │   └── Device 1..N        (systemTitle — unique in file)
+│   │       ├── Identifiers
+│   │       │   ├── LogicalDeviceName   (unique in file)
+│   │       │   └── G3PlcMacAddress     (optional; G3-PLC EUI-64, unique in file)
+│   │       ├── ManufacturingInfo   (optional; shipment profile)
+│   │       └── CredentialGroup 1..N  (securitySuite?, clientId?, name?)
+│   │           │   suite-scoped group: securitySuite + clientId present
+│   │           │     unique (securitySuite, clientId) per Device
+│   │           │     Credential type ∈ {MasterKey, GlobalUnicastEncryption,
+│   │           │                        GlobalAuthentication, Secret, Other}
+│   │           │   suite-independent group: securitySuite + clientId absent
+│   │           │     Credential type ∈ {EapPsk, Other}
+│   │           └── Credential
+│   │               ├── EncryptionMethod (kw-aes256-pad | none)
+│   │               ├── KekRef           (→ Header/Kek/@id; required for kw-aes256-pad)
+│   │               ├── xenc:CipherData  (AES-key-wrapped key)
+│   │               └── GeneratedAt      (optional)
+│   └── Logistics   (optional; shipment profile; deliveryNote?, purchaseOrder?, date?)
+│       └── Pallet 1..N        (id)
+│           └── Box 1..N       (id)
+│               └── DeviceRef  (systemTitle → Device/@systemTitle)
 └── ds:Signature        (optional, enveloped, covers whole document)
 ```
 
